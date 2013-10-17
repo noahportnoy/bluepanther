@@ -219,12 +219,19 @@ void room3to4() {
   //Get to the left wall of room 4 and rightwallfollow until the entrance. If there is an head-obstacle, it can only be a dog.
   //Determine its location, using odometry, turn 180, and then leftwallfollow until room 4 entrance.
   moveDist(20);
-  rotate(-85);
+  rotate(-90);
   moveDist(65);
-  rotate(-85);
-  moveDist(30);
+  rotate(-90);
+  moveDist(40);
   while(autoLineDetect() == false) {
     wallFollow(RIGHT);
+    if (sonarDist[FRONTSONAR] < 25) {  //prev 20
+      rotate(-180);  //prev -100
+      while(autoLineDetect() == false) {
+        wallFollow(LEFT);
+      }
+      break;
+    }
   }
   lineUpEnter();
   curRoomNum = 4;
@@ -239,27 +246,6 @@ void room4to1E() {
     wallFollow(LEFT);
   }
   lineUpEnter();
-  curRoomNum = 1;
-}
-
-void room4to1N() {
-  roomTapeExit();
-  if (room4_orientation == OPENDOWN) {
-    disableSonars();
-    frontSonar.enable();
-    updateSonarsSeq();
-    //Move forward until the wall ahead is close, then right-wall-follow into room 1N
-//    while(sonarDist[FRONTSONAR] < 20) {
-//      updateSonars();
-//      setVelocities(20);
-//      controlBase();
-//    }
-    moveDist(18);
-    while(autoLineDetect() == false) {
-      wallFollow(RIGHT);
-    }
-    lineUpEnter();
-  }
   curRoomNum = 1;
 }
 
@@ -415,11 +401,10 @@ void room4to3() {
 }
 
 void goToNextRoom() {
-//Programed to search the rooms in ascending order, assumed with no dog, room 1 wall location = south, and room 4 opening = opendown.
 //Once the robot has exited a room, this method determines the next room to search and calls the correct room-x-to-room-y- method to take the robot there.
   if (startRoomNum == 1) {
     if (room1_start_room_exit == EAST) {
-    //1E -> 2 -> 3 -> 4 -> 1N -> 1E
+    //1E -> 2 -> 3 -> 4
       switch (curRoomNum) {
         case 1:
           room1Eto2();
@@ -431,15 +416,13 @@ void goToNextRoom() {
           room3to4();
           break;
         case 4:
-          room4to1N();
-          pass_through = true;
-          pass_through_direction = LEFT;
+          room4to1E();
           break;
       }
     }
     else if (room1_start_room_exit == NORTH) {
     //Figure out dog location
-    //Go from 1N to 1E (passthrough), then -> 2 -> 3 -> 4 -> 1N (-> passthrough) 1E
+    //Go from 1N to 1E (passthrough), then -> 2 -> 3 -> 4
       switch (curRoomNum) {
         case 1:
           rotate(180);
@@ -455,13 +438,13 @@ void goToNextRoom() {
           room3to4();
           break;
         case 4:
-          room4to1N();
+          room4to1E();
           break;
       }
     }
   }
   else if (startRoomNum == 2) {
-  //2 -> 3 -> 4 -> 1N (->passthrough) -> 1E -> 2
+  //2 -> 3 -> 4 -> 1N
     switch (curRoomNum) {
       case 2:
         room2to3();
@@ -470,51 +453,116 @@ void goToNextRoom() {
         room3to4();
         break;
       case 4:
-        room4to1N();
-        pass_through = true;
-        pass_through_direction = LEFT;
+        room4to1E();    //***Possibly problem-code
         break;
       case 1:
+        rotate(180);
+        moveDist(10);
+        passThrough(LEFT);
         room1Eto2();
         break;
     }
   }
   else if (startRoomNum == 3) {
-  //3 -> 4 -> 1N (-> Pass through to 1E) -> 2 -> 3
+  //3 -> 2 -> (1E -> Pass through to 1N) -> 4
     switch (curRoomNum) {
       case 3:
-        room3to4();
-        break;
-      case 4:
-        room4to1N();
-        pass_through = true;  //Tell the superior flameHunt program that it should not exit180 since the robot will be facing outwards at another exit, not inwards where it started
-        pass_through_direction = LEFT;
-        break;
-      case 1:
-        room1Eto2();
+        room3to2();
         break;
       case 2:
-        room2to3();
+        room2to1E();
+        pass_through = true;  //Tell the superior flameHunt program that it should not exit180 since the robot will be facing outwards at another exit, not inwards where it started
+        pass_through_direction = RIGHT;
+        break;
+      case 1:
+        room1Nto4();
+        break;
+      case 4:
+        room4to3();
         break;
     }
   }
   else if (startRoomNum == 4) {
-    //4 -> 1N (-> passthrough) 1E -> 2 -> 3 -> 4
-    switch (curRoomNum) {
-      case 4:
-        room4to1N();
-        pass_through = true;
-        pass_through_direction = LEFT;
-        break;
-      case 1:
-        room1Eto2();
-        break;
-      case 2:
-        room2to3();
-        break;
-      case 3:
-        room3to4();
-        break;
+    if (room4_orientation == OPENUP) {
+      if (room4NextRoom == 0) {
+        //Right wall follow around room 4 until the dog has been encountered and avoided. The robot will stop at the entrance of either room 1N or 3.
+        roomTapeExit();
+        moveDist(11);
+        rotate(90);
+        moveDist(6);
+        while (autoLineDetect() == false) {
+          wallFollow(RIGHT);
+          if (sonarDist[FRONTSONAR] < 25) {
+            rotate(-90);
+            sonarDist[FRONTSONAR] = frontSonar.read();
+            delay(50);
+          }
+        }
+        //Line up without enter, determine which room the robot has entered, and build the room to room strategy from there.
+        lineUp();
+        delay(50);
+        sonarDist[RFSONAR] = rfSonar.read();
+        if (sonarDist[FRONTSONAR] < 70) {
+          room4NextRoom = 3;
+          curRoomNum = 3;
+        }
+        else {
+          room4NextRoom = 1;
+          pass_through = true;
+          pass_through_direction = LEFT;
+          curRoomNum = 1;
+        }
+        ledBlink(curRoomNum);
+        //Enter room
+        moveDist(10);
+      }
+      else if (room4NextRoom == 1) {
+      //4 -> (1N -> Passthrough 1E) -> 2 -> 3
+        switch (curRoomNum) {
+          case 4:
+            break;
+          case 1:
+            room1Eto2();
+            break;
+          case 2:
+            room2to3();
+            break;
+          case 3:
+            room3to4();
+            break;
+        }
+      }
+      else if (room4NextRoom == 3) {
+      //4 -> 3 -> 2 -> 1E
+        switch (curRoomNum) {
+          case 4:
+            break;
+          case 3:
+            room3to2();
+            break;
+          case 2:
+            room2to1E();
+            break;
+          case 1:
+            break;
+        }
+      }
+    }
+    else if (room4_orientation == OPENDOWN) {
+    //4 -> 1E -> 2 -> 3
+      switch (curRoomNum) {
+        case 4:
+          room4to1E();
+          break;
+        case 1:
+          room1Eto2();
+          break;
+        case 2:
+          room2to3();
+          break;
+        case 3:
+          break;
+      }
     }
   }
 }
