@@ -1,4 +1,18 @@
 
+void fireFightDemo() {
+//Robot exits a starting room using arbitrary start, then continuously navigates around the maze.
+//When a candle flame is found, it is extinguished and the robot exits the room, and resumes its navigation, looking for another candle.
+  ledOn();
+  buttonStart();
+  ledOff();
+  arbitraryStart();
+  roomDetermine();
+  //Tell the robot the demo conditions
+  room1_wall_location = SOUTH;
+  room4_orientation = OPENDOWN;
+
+  continuousFlameHunt();
+}
 
 void fireFight(){
   ledOn();
@@ -17,7 +31,6 @@ void fireFight(){
 
 void buttonStart() {
   while (startButton.isPushed() == false) {
-    
   }
 }
 
@@ -57,8 +70,44 @@ void flameHunt(){
   }
 }
 
+void continuousFlameHunt(){
+  while (1) {
+    goToNextRoom();
+    servoPowerOn();
+    if (flameDetect() == true) {  //Flame is detected in the room, begin to approach it and stop when close enough.
+      ledBlink();
+      robotFlamePoint();
+      flameApproach2();   //Approach the flame until within range to extinguish it. Some flameApproach.
+      flameScanFull(X);
+      sensorFlamePoint(X);
+      flameScanFull(Y);
+      sensorFlamePoint(Y);
+      flameExtinguishSP();  //Spray a burst of CO2 at the flame
+      verifyExtinguish();  //Verifies that the flame has been extinguished, otherwise will attempt to extinguish it again by flooding it with CO2.
+//      exitLeft();
+      arbitraryStart();
+      ledBlink();
+      servoPowerOff();
+    }
+    else {
+      servoPowerOff();
+      //If pass_through is false, the robot does not  passed through the room, so it is still at the tape facing into the room. It is not facing outwards at another exit.
+      if (pass_through == false) {
+        exit180();
+      }
+      else {
+        //The robot needs to pass through a room. The direction to follow must already have been stored in pass_through_direction
+        passThrough(pass_through_direction);
+        //Deactivate the completed pass_through call
+        pass_through = false;
+        pass_through_direction = UNKNOWN;
+      }
+    }
+  }
+}
+
 void sensorStart(){
-  ready_toRun(10);
+  
 }
 
 void wallFollow(int wallDir){

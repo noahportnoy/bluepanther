@@ -4,8 +4,12 @@
   //Extinguisher
 
   //Flame sensor
-  FlameSensor* fSensor = &flameSensor;
-
+//  FlameSensor* fSensor = &flameSensor;
+  const int numFlameSensors = NUM_FLAME_SENSORS;  //NUM_FLAME_SENSORS defined in main tab
+//  FlameSensor fSensor[numFlameSensors] = flameSensor;
+//  FlameSensor* fSensor = flameSensor;
+  FlameSensor *fSensor[numFlameSensors] = {&flameSensor[0], &flameSensor[1], &flameSensor[2], &flameSensor[3], &flameSensor[4], &flameSensor[5], &flameSensor[6]};
+  
   //Scan
   int heatSig[2] = {0, 0};    //Flame reading
   int maxHeatSig[2] = {0, 0};    //Will store the largest flame reading per scan
@@ -24,6 +28,7 @@
   //Center potition is straight ahead for horizontal, and level for vertical.
   //Horizontal zero degrees is understood to be 90 degrees left of center. Vertical zero is defined to be 90 degrees less than level.
   int servoOffset[2] = {32, -70};  //Clockwise, or upwards rotation of servo from zero degrees. Lower moves the servo towards zero.
+  int sensorFlamePointOffset[2] = {-8, -12};  //How much to adjust/correct the robot arm to point the hose directly at flame, after obtaining max readings from flame scans
   
   //Key positions
   int centerPos[2] = {90, 84};
@@ -31,13 +36,14 @@
   int leftPos = 50;  //***Left-most position. 90 degrees is straight, less than 90 is left, and greater than 90 is right
   int rightPos = 200;
   int left22 = 70;    //22 degrees left of center
-
   int right22 = 110;    //22 degrees right of center
+  int left30 = 70;
+  int right30 = 110;
   int left45 = 50;
   int right45 = 135;
     //Vertical servo-90 degrees means pointing level
   int upPos = 110;  //Pointing straight up
-  int downPos = 75;  //Pointing as low as possible without physically touching the horizontal servo
+  int downPos = 50;  //Pointing as low as possible without physically touching the horizontal servo
   int up22 = 110;
   int down22 = 75;
   int up45 = 100;
@@ -54,10 +60,19 @@
 //______________________________________________________________________________________________
 
 int readFlameSensor(int servoID) {
-//Reads the flame sensor and returns the value (for user application, if needed. Most of these programs implemented here use the heatsig variable, not the returned value.
+//Reads the flame sensor array, stores the peak heat reading in the heatsig variable (not the returned value), and returns the index of the sensor with the highest reading.
 //Takes a parameter because it has to store the result in the correct servo's heatSig[] variable
-  heatSig[servoID] = fSensor -> read();
-  return heatSig[servoID];
+  int maxHeatVal = 0;
+  int maxFlameSensorIndex = 0;
+  for(int i = 0; i < numFlameSensors; i++) {
+    int sensorVal = fSensor[i]->read();
+    if (maxHeatVal < sensorVal) {
+      maxHeatVal = sensorVal;
+      maxFlameSensorIndex = i;
+    }
+  }
+  heatSig[servoID] = maxHeatVal;
+  return maxFlameSensorIndex;
 }
 
 void servoAlign(int servoID, int pos){
@@ -100,14 +115,16 @@ boolean flameDetect() {
 
 boolean flameScanFull(int servoID){
 //Sweep-scan right (and records the maximum heat reading)
-  int beginPos = 90;
-  int endPos = 90;
+//Optimized to use flameSensor array
+  int beginPos;
+  int endPos;
   
   if (servoID == X) {
-    beginPos = leftPos;
-    endPos = rightPos;
-  }
-  else if (servoID == Y) {
+//    beginPos = leftPos;
+//    endPos = rightPos;
+    beginPos = left30; 
+    endPos = right30;
+  } else if (servoID == Y) {
     beginPos = downPos;
     endPos = upPos;
   }
@@ -116,8 +133,9 @@ boolean flameScanFull(int servoID){
 
 void flameScanMini(int servoID){
 //Sweep-scan right (and records the maximum heat reading)
-  int beginPos = 90;
-  int endPos = 90;
+//Obsolete because of flame sensor array
+  int beginPos;
+  int endPos;
   
   if (servoID == X) {
     beginPos = left45;
@@ -182,10 +200,10 @@ void flameApproach(){
 void sensorFlamePoint(int servoID){
 //Point sensor and nozzle towards flame
   if (servoID == X) {
-    lockIn(servoID, maxHeatSigPW[servoID]-5);
+    lockIn(servoID, maxHeatSigPW[servoID]+sensorFlamePointOffset[servoID]);
   }
   else {
-    lockIn(servoID, maxHeatSigPW[servoID]-5);
+    lockIn(servoID, maxHeatSigPW[servoID]+sensorFlamePointOffset[servoID]);
   }
 }
 
@@ -362,28 +380,33 @@ void sweepScan(int servoID, int startPos, int endPos, int pwStep){
     for (int pos = startPos; pos < endPos; pos+= pwStep) {
       servoAlign(servoID, pos);
       //Read the heat signature
-      readFlameSensor(servoID);
+      int maxFlameSensorIndex = readFlameSensor(servoID);
       //Note the maximum heat signature and it's position
-      if (maxHeatSig[servoID] < heatSig[servoID]) {
-        maxHeatSig[servoID] = heatSig[servoID];
-        maxHeatSigPW[servoID] = pos;
+      if (servoID == X) {
+        if (maxHeatSig[servoID] < heatSig[servoID]) {
+          maxHeatSig[servoID] = heatSig[servoID];
+          maxHeatSigPW[servoID] = (pos - 90) + (maxFlameSensorIndex * 30);
+        }
+      } else if (servoID == Y) {
+        if (maxHeatSig[servoID] < heatSig[servoID]) {
+          maxHeatSig[servoID] = heatSig[servoID];
+          maxHeatSigPW[servoID] = pos;
+        }
       }
 
       //***Testing only: Print the values
-      Serial.print(servoID);
-      Serial.print("   ");
-      Serial.print(pos);
-      Serial.print("   ");
-      Serial.print(heatSig[servoID]);
-      Serial.print("   ");
-      Serial.print(maxHeatSigPW[servoID]);
-      Serial.print("   ");
-      Serial.println(maxHeatSig[servoID]);
+//      Serial.print(servoID);
+//      Serial.print("   ");
+//      Serial.print(pos);
+//      Serial.print("   ");
+//      Serial.print(heatSig[servoID]);
+//      Serial.print("   ");
+//      Serial.print(maxHeatSigPW[servoID]);
+//      Serial.print("   ");
+//      Serial.println(maxHeatSig[servoID]);
 
     }
-  }
-  
-  else if (endPos < startPos) {
+  } else if (endPos < startPos) {
     //Lock into start position
     lockIn(servoID, startPos);
     //Scan
@@ -391,11 +414,19 @@ void sweepScan(int servoID, int startPos, int endPos, int pwStep){
     for (int pos = startPos; pos > endPos; pos-= pwStep) {
       servoAlign(servoID, pos);
       //Read the heat signature
-      readFlameSensor(servoID);
+      int maxFlameSensorIndex = readFlameSensor(servoID);
       //Note the maximum heat signature and it's position
-      if (maxHeatSig[servoID] < heatSig[servoID]) {
-        maxHeatSig[servoID] = heatSig[servoID];
-        maxHeatSigPW[servoID] = pos;
+      //Note the maximum heat signature and it's position
+      if (servoID == X) {
+        if (maxHeatSig[servoID] < heatSig[servoID]) {
+          maxHeatSig[servoID] = heatSig[servoID];
+          maxHeatSigPW[servoID] = (pos - 90) + (maxFlameSensorIndex * 30);
+        }
+      } else if (servoID == Y) {
+        if (maxHeatSig[servoID] < heatSig[servoID]) {
+          maxHeatSig[servoID] = heatSig[servoID];
+          maxHeatSigPW[servoID] = pos;
+        }
       }
     }
   }
@@ -448,7 +479,7 @@ void extinguisherTest(){
   delay(5000);
 }
 
-//Need to incorporate cycleServo with its variables
+//Update flameApproach2() to use the flame sensor array
 void flameApproach2() {
 //Moves the robot towards the candle in a continuous motion.
 //This method will terminate once the robot is close enough to the candle to extinguish it, measured by a strong enough heat signature, or a dip in the readings.
@@ -456,26 +487,28 @@ void flameApproach2() {
 //The robot's heading is corrected after every horizontal servo sweep.
 //If the robot sees a dip in the flame readings, then adjust the vertical servo and use a scan and step approach until the flame has been succesfully approached.
   
-  int posStep = 5;
+  int posStep = 3;
   long servoInterval = 20;
   int tempMaxHeatSig = 0;  //The changing max during scans (servo cycles)
   int tempMaxHeatSigPW = 0;  //The changing max during scans (servo cycles)
   int tolerance = 5;  //Robot can move straight if flame is within +/- this (angle/degree) value of straight ahead
+  int pmaxHeatSig[2];
   
   flameScanFull(X);
-  int pmaxHeatSig[2];
   pmaxHeatSig[X] = maxHeatSig[X];
   
-  lockIn(X, leftPos);
-  cycleServo(X, leftPos, rightPos, posStep, servoInterval);
+  lockIn(X, left30);
+  cycleServo(X, left30, right30, posStep, servoInterval);
   //Only scans horizontally using cycleServo, so only need to keep track of horizontal cycle direction
   //Perhaps change to use array indexed by [X], just to be consistent with the rest of the program. Will still only use X.
   int curServoXDir = getServoDir(X);
   int prevServoXDir = curServoXDir;
   
   while ((minFlameVal < maxHeatSig[X]) && ((pmaxHeatSig[X] - 60) < maxHeatSig[X])) {  //Prev: 150, 60. While a flame can be seen and its heat-sig is becoming stronger with time
+//  flameStopVal = 9999;  //Temp. Disable stopping when clost to flame.
 //  while (minFlameVal < maxHeatSig[X]) {  //While a flame can be seen
-    cycleServo(X, leftPos, rightPos, posStep, servoInterval);
+//  while (1) {
+    cycleServo(X, left30, right30, posStep, servoInterval);
     curServoXDir = getServoDir(X);
     
     //If the direction has changed (i.e. half-cycle has completed) then update maxHeatSig stuff
@@ -493,20 +526,18 @@ void flameApproach2() {
 */
     }
 
-    readFlameSensor(X);
+    int tempMaxFlameSensorIndex = readFlameSensor(X);
+    
     if (tempMaxHeatSig < heatSig[X]) {
       tempMaxHeatSig = heatSig[X];
-      tempMaxHeatSigPW = getServoPos(X);
+      //tempMaxHeatSigPW = getServoPos(X);
+      tempMaxHeatSigPW = (getServoPos(X) - 90) + (tempMaxFlameSensorIndex * 30);  //Get the flame angle from the sensor array
     }
     if (flameStopVal < maxHeatSig[X]) {    //If close flame is detected, stop the robot
       //Stop the motors
       stopMotors();  //Bypassed PD control. controlBase must not be called after this, since it may compute a new speed for the motors.
       break;
     }
-//    if ((pmaxHeatSig[X] - 60) < maxHeatSig[X]) {
-//      stopMotors();
-//      break;
-//    }
     //Turn toward the flame
     if (maxHeatSigPW[X] < (centerPos[X] - tolerance)) {  //If the flame is more than x degrees left of center, arc-turn left
       setVelocities(10, 15);
@@ -570,5 +601,18 @@ void flameSPA2(){
 */
     }
   }
+}
+
+long cmilFlameTest = 0;
+long pmilFlameTest = 0;
+long dlymilFlameTest = 50;
+
+void flameSensorTest() {
+  for (int i = 0; i < numFlameSensors; i++) {
+    Serial.print(fSensor[i]->read());
+    Serial.print("   ");
+    delay(dlymilFlameTest);
+  }
+  Serial.println();
 }
 

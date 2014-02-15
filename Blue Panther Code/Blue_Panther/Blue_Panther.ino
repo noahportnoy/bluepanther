@@ -11,15 +11,12 @@
  -Tested. Working well.
  
  //Flame-detection
- -Heavily modified my old flameSPA to integrate the vertical servo. Now uses arrays and pointers.
  -Create a new flameExtinguishFlood2() method, which uses the cycleServo method to continuously sweep over the candle's flame  zone with CO2.
  
  //Line-up
- -Robot moves past the line half the time. Perhaps PD control isn't moving converging fast enough. Try writiing speeds directly to motors.
  
  //Motors
  -DualVNH5019MotorShield Library uses pins 9 and 10 exclusively for timer 1 pwm control. This cannot be changed because of how the library was designed.
- -***Servo jitter severely distorts sonar readings, and slows them down. Add relay to switch power to servos when servos needed but sonars not.
  -75:1 motors max speed = 1 meter/sec
  -Perhaps rename moveDist() to moveCm()
  -It does not make sense to have a moveVelocity() method which waits for the wheels to converge on the velocity before terminating.
@@ -139,8 +136,12 @@ int m2aPin = 52;
 int m2bPin = 53;
 
 //--------Flame-sensing-------
-int flameSensorPin = A8;
-FlameSensor flameSensor(flameSensorPin);
+//int flameSensorPin = A8;
+//FlameSensor flameSensor(flameSensorPin);
+#define NUM_FLAME_SENSORS 7
+//const int numFlameSensors = 7;
+int flameSensorPin[NUM_FLAME_SENSORS] = {A4, A5, A6, A7, A13, A14, A15};
+FlameSensor flameSensor[NUM_FLAME_SENSORS];
 
 //------------LEDs------------
 int ledPin = 31;
@@ -164,10 +165,10 @@ DualVNH5019MotorShield motors;  // Define our motor controller
 int dcMotorRelayPin = 48;
 
 //-----PD-Controllers-----
-//Odometers hold the average distance travelled by both wheels since their last reset. (Reset by assigning zero to them)
+//Odometers hold the average distance travelled by both wheels since their last reset. (Reset odometer by assigning it value zero)
 //Used for odometry.
-int numOdometers = 2;
-float odometer[2];  //Odometer 0 used for dog_detection
+const int numOdometers = 2;
+float odometer[numOdometers];  //Odometer 0 used for dog_detection
 
 //States assigned to the base_control_mode to operate the PDControllers
 enum {
@@ -250,6 +251,7 @@ void setup(){
   setupServos();  //Turns on servos to orient them, then then turns them off
   setupSonars();
   setupLineSensors();
+  setupFlameSensors();
   initializeOdometers();
   flame.on();   //The candle is alight
   ledBlink();
@@ -267,6 +269,31 @@ long dlymilTest = 6000;
 
 void loop(){
   wallFollow(LEFT);
+//  wallFollow(RIGHT);
+//  flameApproach2();
+//  delay(2000);
+//  flameScanFull(X);
+//  sensorFlamePoint(X);
+//  flameScanFull(Y);
+//  sensorFlamePoint(Y);
+//  delay(2000);
+//  flameExtinguishSP();
+//  delay(2000);
+//  setupServos();
+//  ledOn();
+//  buttonStart();
+//  ledOff();
+//  flameScanFull(X);
+//  sensorFlamePoint(X);
+//  flameExtinguishSP();
+//  setupServos();
+//  ledOn();
+//  buttonStart();
+//  ledOff();
+//  flameSensorTest();
+//  Serial.println(analogRead(A14));
+//  delay(50);
+//  wallFollow(LEFT);
 //  delay(2000);
 //  flameSPA2();
 //  delay(2000);
@@ -369,7 +396,7 @@ void setupSonars(){
   sonar[LBSONAR] = &lbSonar;
   sonar[LFSONAR] = &lfSonar;
 
-  //Initialize distance readings to zero.
+  //Measure and initialize distance readings.
   for (int i = 0; i < numSonars; i++) {
     sonar[i]->enable();
     sonarDist[i] = sonar[i]->read();
@@ -384,6 +411,12 @@ void setupLineSensors() {
   
   leftLineSensor.setVerifyInterval(dlyMinWhiteLineInterval);
   rightLineSensor.setVerifyInterval(dlyMinWhiteLineInterval);
+}
+
+void setupFlameSensors() {
+  for (int i = 0; i < NUM_FLAME_SENSORS; i++) {
+    flameSensor[i] = FlameSensor(flameSensorPin[i]);
+  }
 }
 
 void initializeOdometers() {

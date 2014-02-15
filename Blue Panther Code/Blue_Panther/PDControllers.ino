@@ -38,7 +38,7 @@ void PDController_base_position() {
   float df[2];  //Change in force applied to wheels (pwm value)
   float tolerance = 1.1;  //In cm. Not feasible to move the precise distance. This is within how close the controller will get to it
   
-  float max_speed = 150.0;    //300, 200
+  float max_speed = 300.0;    //300, 200, 150
   
   //When printing data to monitor, software delay impacts pd controller. use gains k = 1.0, b = 0.6 for critically damped motion.
   float k = 1.0;  //Prev: 0.5, 3.0, 3.0, 3.0,
