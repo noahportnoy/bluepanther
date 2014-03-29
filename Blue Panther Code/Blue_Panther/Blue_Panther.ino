@@ -85,9 +85,11 @@ Button startButton(buttonPin);
 //------Distance IRs-----
 //Two sensors, mounted at left 45 and right 45 degrees from normal
 //No class ready to construct IR-proximity sensor objects, so read the sensors directly from the pins
+int frontDistIRPin = A3;
 int leftDistIRPin = A9;
 int rightDistIRPin = A10;
 
+#define FRONTIR A3
 #define LEFTIR  A9
 #define RIGHTIR A10
 
@@ -141,7 +143,8 @@ int m2bPin = 53;
 #define NUM_FLAME_SENSORS 7
 //const int numFlameSensors = 7;
 int flameSensorPin[NUM_FLAME_SENSORS] = {A4, A5, A6, A7, A13, A14, A15};
-FlameSensor flameSensor[NUM_FLAME_SENSORS];
+//TODO CHI - check this line
+FlameSensor flameSensor[NUM_FLAME_SENSORS] = FlameSensor(0);
 
 //------------LEDs------------
 int ledPin = 31;
@@ -268,7 +271,20 @@ long pmilTest = 0;
 long dlymilTest = 6000;
 
 void loop(){
-  wallFollow(LEFT);
+  //room1Nto3 test
+  room1Nto3();
+  delay(10000);
+  
+  //NOAH - working dog detection while wall following
+  //wallFollow(RIGHT);
+//  int sensorValue = getDist(FRONTIR);
+//  Serial.println(sensorValue);
+//  delay(50);
+//  if(sensorValue < 400) {
+//    stopMotors();
+//    delay(10000);
+//  }
+  
 //  wallFollow(RIGHT);
 //  flameApproach2();
 //  delay(2000);

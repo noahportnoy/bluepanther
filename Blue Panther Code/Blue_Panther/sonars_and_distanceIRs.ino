@@ -110,6 +110,9 @@ int getDist(int irSensor) {
   else if (irSensor == RIGHTIR) {
     pinNum = rightDistIRPin;
   }
+  else if (irSensor == FRONTIR) {
+    pinNum = frontDistIRPin;
+  }
   
   int distance = avgSensor(pinNum, distNOR);
   distance =  850 - (254.0/1024.0) *2.0* distance * 2.54;
@@ -129,6 +132,9 @@ void distTest(int irSensor){
     }
     else if (irSensor == RIGHTIR) {
       pinNum = rightDistIRPin;
+    }
+    else if (irSensor == FRONTIR) {
+      pinNum = frontDistIRPin;
     }
     int dist = getDist(pinNum);
     Serial.println(dist);

@@ -35,6 +35,7 @@ void room1Eto2() {
   curRoomNum = 2;
 }
 
+//Todo: Needs testing
 void room1Eto3() {
 //Room 1 east-exit to room 3
   roomTapeExit();
@@ -53,23 +54,49 @@ void room1Eto3() {
   curRoomNum = 3;
 }
 
+//Todo: Needs testing
 void room1Nto3() {
 //Room 1 north-exit to room 3
-  locateDogFromRoom1N();
+  dog_location = UNKNOWN;
+  //locateDogFromRoom1N();
   roomTapeExit();
-  if (dog_location == ONE) {
+  if ((dog_location == UNKNOWN) || (dog_location == ONE) || (dog_location == TWO)) {
   //Go to center, turn left, move alongside room 2 wall, turn 180 then leftwallfollow into room 3
-    moveDist(20);
+    moveDist(18);
+    delay(3000);
     rotate(-90);
-    moveDist(90);
-    rotate(-90);
-    moveDist(40);
-    rotate(180);
-    while(autoLineDetect() == false) {
-      wallFollow(LEFT);
+    delay(2000);
+    //If dog has not yet been discovered, see if dog is down this hallway
+    if(dog_location == UNKNOWN) {
+      int frontIRdist = getDist(FRONTIR);
+      Serial.println(frontIRdist);
+      delay(1);
+      //If the front IR gives a distance less than 700, the dog is there at location THREE
+      //Turn clockwise 90 degrees and wallfollow right into room 3
+      if(frontIRdist < 700) {
+        dog_location == THREE;
+        rotate(90);
+        while(autoLineDetect() == false) {
+          wallFollow(RIGHT);
+        }
+      }
+    }
+    //If dog was not found at location THREE or the dog is known to be at ONE or TWO,
+    //then continue down the hall to room 3
+    if ((dog_location == UNKNOWN) || (dog_location == ONE) || (dog_location == TWO)) {
+      ledBlink();
+      delay(8000);
+      moveDist(90);
+      rotate(-90);
+      moveDist(40);
+      rotate(180);
+      while(autoLineDetect() == false) {
+        wallFollow(LEFT);
+      }
     }
   }
-  else if ((dog_location == TWO) || (dog_location == THREE)) {
+  //If we exit room1N and the dog location is THREE, then wallfollow right up to room 3
+  else if (dog_location == THREE) {
     moveDist(20);
     while(autoLineDetect() == false) {
       wallFollow(RIGHT);
@@ -79,6 +106,7 @@ void room1Nto3() {
   curRoomNum = 3;
 }
 
+//Todo: Needs testing
 void room1Eto4() {
 //Room 1 east-exit to room 4
 //Assumes that room 1's var door location is known. Room 4's orientation does not need to be known.
@@ -107,6 +135,7 @@ void room1Eto4() {
   curRoomNum = 4;
 }
 
+//Todo: Needs testing
 void room1Nto4() {
 //Room 1 north-exit to room 4
   locateRoom1VarDoorFromRoom1N();  //Determine the location of room 1's var door from room 1N
@@ -163,6 +192,7 @@ void room2to3() {
   curRoomNum = 3;
 }
 
+//Todo: Needs testing
 void room2to4() {
 //Room 2 to room 4, dog location does not matter
 //***Add dog-location-detection using odometry
@@ -184,6 +214,7 @@ void room2to4() {
   curRoomNum = 4;
 }
 
+//Todo: Needs testing
 void room3to1E() {
 //Room 3 exit to room 1 east-entrance
   moveDist(20);
@@ -212,6 +243,7 @@ void room3to2() {
   curRoomNum = 2;
 }
 
+//Todo: Need to test with dog
 void room3to4() {
 //***This method may need to change depending on what trinity say about the dog locations when room 4 is oriented opendown
   //Use a timer to measure this on an interval and allow time for primitive0 to rotate away from the wall
@@ -230,6 +262,7 @@ void room3to4() {
   curRoomNum = 4;
 }
 
+//Todo: Needs testing
 void room4to1E() {
 //Specific entrance to room 1 from room 4 is unknown because the orientation of room 4 may not be known
 //Measure front distance to gauge room size before entering, to know which entrance robot is at, and to then determine the location of the var. door
@@ -242,6 +275,7 @@ void room4to1E() {
   curRoomNum = 1;
 }
 
+//Todo: Consider other orientations of room 4
 void room4to1N() {
   roomTapeExit();
   if (room4_orientation == OPENDOWN) {
@@ -307,6 +341,7 @@ void room4to1N() {
 //  lineUpEnter();
 //  curRoomNum = 3;
 //}
+//Todo: Needs testing
 void room4to2() {
   dogAt1 = false;
   odometer[0] = 0;
@@ -364,6 +399,7 @@ void room4to2() {
   curRoomNum = 2;
 }
 
+//Todo: Needs testing
 void room4to3() {
   dogAt1 = false;
   odometer[0] = 0;
