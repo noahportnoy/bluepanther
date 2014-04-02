@@ -35,7 +35,7 @@ void room1Eto2() {
   curRoomNum = 2;
 }
 
-//Todo: Needs testing
+// Todo: needs testing
 void room1Eto3() {
 //Room 1 east-exit to room 3
   roomTapeExit();
@@ -50,54 +50,105 @@ void room1Eto3() {
   while(autoLineDetect() == false) {
     wallFollow(LEFT);
   }
+
+// ROOM to ROOM method, invalid?
+//  while(autoLineDetect() == false) {
+//    wallFollow(LEFT);
+//  }
+//  rotate(180);
+//  moveDist(15);
+//  while(autoLineDetect() == false) {
+//    wallFollow(LEFT);
+//  }
   lineUpEnter();
   curRoomNum = 3;
 }
 
-//Todo: Needs testing
+// TODO NOAH: Needs testing
 void room1Nto3() {
 //Room 1 north-exit to room 3
+  int distanceTraveledToDog;
   dog_location = UNKNOWN;
   //locateDogFromRoom1N();
   roomTapeExit();
   if ((dog_location == UNKNOWN) || (dog_location == ONE) || (dog_location == TWO)) {
-  //Go to center, turn left, move alongside room 2 wall, turn 180 then leftwallfollow into room 3
-    moveDist(18);
-    delay(3000);
-    rotate(-90);
-    delay(2000);
-    //If dog has not yet been discovered, see if dog is down this hallway
-    if(dog_location == UNKNOWN) {
-      int frontIRdist = getDist(FRONTIR);
-      Serial.println(frontIRdist);
-      delay(1);
-      //If the front IR gives a distance less than 700, the dog is there at location THREE
-      //Turn clockwise 90 degrees and wallfollow right into room 3
-      if(frontIRdist < 700) {
-        dog_location == THREE;
-        rotate(90);
-        while(autoLineDetect() == false) {
-          wallFollow(RIGHT);
-        }
+    odometer[0] = 0;
+    while(autoLineDetect() == false) {
+      wallFollow(LEFT);
+      if(getDist(FRONTIR) < 400) {
+        //dog detected
+        dog_location = THREE;
+        break;
       }
     }
-    //If dog was not found at location THREE or the dog is known to be at ONE or TWO,
-    //then continue down the hall to room 3
-    if ((dog_location == UNKNOWN) || (dog_location == ONE) || (dog_location == TWO)) {
-      ledBlink();
-      delay(8000);
-      moveDist(90);
-      rotate(-90);
-      moveDist(40);
+  
+    //If dog was detected at location 3, then capture distance traveled to the dog
+    //Then rotate 180, follow left wall and then switch to following the right wall
+    //Into room 3
+    //ALTERNATIVE - wall follow right back to room 1 north entrance, then rotate180
+    //and wall follow right
+    if(dog_location == THREE) {
+      distanceTraveledToDog = odometer[0];
+      rotate(180);
+      odometer[0] = 0;
+      while(autoLineDetect() == false && odometer[0] < distanceTraveledToDog) {
+        wallFollow(LEFT);
+      }
+      while(autoLineDetect() == false) {
+        wallFollow(RIGHT);
+      }
+    }
+    //dog was not detected at location 3. now at room 1 east entrance
+    //rotate 180, follow left wall to room 2, rotate 180, then follow left wall to room 3
+    else {
+      rotate(180);
+      while(autoLineDetect() == false) {
+        wallFollow(LEFT);
+      }
       rotate(180);
       while(autoLineDetect() == false) {
         wallFollow(LEFT);
       }
     }
+    
+      //Go to center, turn left, move alongside room 2 wall, turn 180 then leftwallfollow into room 3
+//    moveDist(18);
+//    //make delay shorter
+//    delay(3000);
+//    rotate(-90);
+//    //make delay shorter
+//    delay(2000);
+    //If dog has not yet been discovered, see if dog is down this hallway
+//    if(dog_location == UNKNOWN) {
+//      int frontIRdist = getDist(FRONTIR);
+//      Serial.println(frontIRdist);
+//      delay(1);
+//      //If the front IR gives a distance less than 700, the dog is there at location THREE
+//      //Turn clockwise 90 degrees and wallfollow right into room 3
+//      if(frontIRdist < 700) {
+//        dog_location = THREE;
+//        rotate(90);
+//        while(autoLineDetect() == false) {
+//          wallFollow(RIGHT);
+//        }
+//      }
+//    }
+    //If dog was not found at location THREE or the dog is known to be at ONE or TWO,
+    //then continue down the hall to room 3
+//    if ((dog_location == UNKNOWN) || (dog_location == ONE) || (dog_location == TWO)) {
+//      ledBlink();
+//      delay(8000);
+//      moveDist(90);
+//      rotate(-90);
+//      moveDist(40);
+//      rotate(180);
+//      while(autoLineDetect() == false) {
+//        wallFollow(LEFT);
+//      }
+//    }
   }
   //If we exit room1N and the dog location is THREE, then wallfollow right up to room 3
   else if (dog_location == THREE) {
-    moveDist(20);
     while(autoLineDetect() == false) {
       wallFollow(RIGHT);
     }

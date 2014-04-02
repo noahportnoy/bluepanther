@@ -271,11 +271,13 @@ long pmilTest = 0;
 long dlymilTest = 6000;
 
 void loop(){
-  //room1Nto3 test
-  room1Nto3();
+  //wallFollow(LEFT);
+  
+  //NOAH - room1Nto3 test
+  room1Eto3();
   delay(10000);
   
-  //NOAH - working dog detection while wall following
+  //NOAH - working dog detection and stop while wall following
   //wallFollow(RIGHT);
 //  int sensorValue = getDist(FRONTIR);
 //  Serial.println(sensorValue);
@@ -284,6 +286,9 @@ void loop(){
 //    stopMotors();
 //    delay(10000);
 //  }
+
+
+
   
 //  wallFollow(RIGHT);
 //  flameApproach2();
