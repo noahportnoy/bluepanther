@@ -1,8 +1,0 @@
-worksheet1 2
-assignment1 14
-worksheet2 5
-assignment2 14
-worksheet3 4
-worksheet4 0
-assignment3 14
-worksheet5 0
