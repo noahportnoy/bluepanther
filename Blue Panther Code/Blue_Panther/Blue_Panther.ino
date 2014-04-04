@@ -106,6 +106,9 @@ enum {
   ONE,
   TWO,
   THREE,
+  ONE_TWO,
+  ONE_THREE,
+  TWO_THREE,
   //Room 1 variable door locations, start room exit locations
   NORTH,
   SOUTH,
@@ -157,8 +160,8 @@ LineSensor rightLineSensor(rightLineSensorPin);
 
 LineSensor *lineSensor[2] = {&leftLineSensor, &rightLineSensor};
 
-int leftWhite = 85;  //Prev: 500. Minimum value for line sensor that can be accapted as white.
-int rightWhite = 85;  //Prev: 700
+int leftWhite = 50;  //Prev: 500. Minimum value for line sensor that can be accapted as white.
+int rightWhite = 50;  //Prev: 700
 
 long dlyMinWhiteLineInterval = 20;  //The time interval over which a continuous white reading will be accepted as a white line, not a stray mark.
 
@@ -273,9 +276,9 @@ long dlymilTest = 6000;
 void loop(){
   
   //NOAH - room3to4 test
+  lineUp();
   room3to4();
   delay(10000);
-  
   // NOAH - working dog detection and stop while wall following
   // wallFollow(RIGHT);
   // int sensorValue = getDist(FRONTIR);

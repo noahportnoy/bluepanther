@@ -184,7 +184,7 @@ void room1Nto4() {
 
   while(odometer[0] <= distToWallSwitch) {
     wallFollow(RIGHT);
-    if(frontIRdist < 400) {
+    if(getDist(FRONTIR) < 400) {
       dogDetected = true;
       dog_location = 2;
       break;
@@ -199,7 +199,7 @@ void room1Nto4() {
   } else {
     while(autoLineDetect() == false) {
       wallFollow(LEFT);
-      if(frontIRdist < 400) {
+      if(getDist(FRONTIR) < 400) {
         dog_location = 1;
         break;
       }
@@ -305,13 +305,11 @@ void room3to2() {
 
 //Todo Noah: Needs testing
 void room3to4() {
-//***This method may need to change depending on what trinity say about the dog locations when room 4 is oriented opendown
-  //Use a timer to measure this on an interval and allow time for primitive0 to rotate away from the wall
   roomTapeExit();
   
   boolean dogDetected = false;
-  int distToWallSwitch = 120;
-  int distToDog1 = 160;
+  int distToWallSwitch = 110;
+  int distToDog1 = 190;
   odometer[0] = 0;
 
   while(odometer[0] < distToWallSwitch) {
@@ -319,19 +317,24 @@ void room3to4() {
   }
   while(autoLineDetect() == false) {
     wallFollow(RIGHT);
-    if(frontIRdist < 400) {
+    Serial.print("Dog: ");
+    Serial.println(getDist(FRONTIR));
+    if(getDist(FRONTIR) < 500) {
+        Serial.print("DOG DETECTED ");
         dogDetected = true;
         if(odometer[0] <= distToDog1) {
+          Serial.println("AT LOCATION ONE");
           dog_location = ONE;
         } else {
+          Serial.println("AT LOCATION TWO_THREE");
           dog_location = TWO_THREE;
         }
         break;
     }
-    }
   }
   if(dogDetected == true) {
-    rotate(180);
+    moveDist(-5);
+    rotate(240);
     while(autoLineDetect() == false) {
       wallFollow(LEFT);
     }
@@ -479,51 +482,33 @@ void room4to2() {
 
 //Todo: Needs testing
 void room4to3() {
-  dogAt1 = false;
   odometer[0] = 0;
-  int odometerDogApproached = 0;
-  frontSonar.enable();
-  rfSonar.enable();
-  roomTapeExit();
-  if(room4_orientation == OPENUP) {
-   
-    moveDist(15);
-    rotate(-90);
-    
-    while(odometer[0] < 20) {              //wall follow right, check for dog
-      wallFollow(RIGHT);
-      if(sonarDist[FRONTSONAR] < 25) {
-        dogAt1 = true;
-        break;
-      }
-    }
-   
-    if(dogAt1 == true) {
-      rotate(180);
-      odometerDogApproached = odometer[0];
-      odometer[0] = 0;
-      while(odometer[0] < (odometerDogApproached + 25)) {
+  int distToWallSwitch1 = 60;
+  int distToWallSwitch2 = 110;
+
+  if(romm4_orientation == OPENUP) {
+    if(dog_location == UNKNOWN || dog_location == TWO || dog_location == THREE || dog_location == TWO_THREE) {
+
+      while(odometer[0] < distToWallSwitch1) {
         wallFollow(LEFT);
+        if(getDist(FRONTIR) < 500 && dog_location == UNKNOWN) {
+          dog_location = ONE;
+          break;
+        }
       }
-      while(sonarDist[RFSONAR] < 50) {
-        wallFollow(RIGHT);
+
+      if(dog_location == ONE) {
+        rotate(180);
+        odometer[0] = 0;
+
+        while(odometer[0] < distToWallSwitch2) {
+          wallFollow(LEFT);
+        }
       }
-      rotate(13);
-      moveDist(55);
-      while(autoLineDetect() == false) {
-        wallFollow(LEFT);
-      }   
-    } else {  
-      while(autoLineDetect() == false) {
-        wallFollow(RIGHT);
-      }
+
     }
-///////////////////////////////////////////////////////////    
-  } else if(room4_orientation == OPENDOWN) {
-    moveDist(15);
-    rotate(99);
-    moveDist(71);
   }
+
   lineUpEnter();
   curRoomNum = 3;
 }
