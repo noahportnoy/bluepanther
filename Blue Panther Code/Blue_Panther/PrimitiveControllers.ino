@@ -1,8 +1,12 @@
 int wall_follow_direction = RIGHT;  //Default
-float base_speed_f = 70;  //In cm/s. The max speed that robot can move forward while wall-following. Prev: 30, 40
+float base_speed_f = 40;  //In cm/s. The max speed that robot can move forward while wall-following. Prev: 30, 40, 60
 //float wall_follow_dist = 10.0; //Prev: 20
 
+extern float wheel_set_position[2];  //This set point, once set, will be reduced as the robot converges on the target distance from robot's frame of ref.
+extern float wheel_cur_position[2];  //In cm, computed by computePositionandVelocity(). Holds the distance travelled. Is reset after every call to PD pos controller
 extern float wheel_set_velocity[2];  //This array holds the velocity setpoint, set by one of the primitive or macro controllers.
+extern float wheel_cur_velocity[2];  //This is computed by computeVelocityAndAcceleration() and written into this array. 0 = left, 1 = right
+extern float wheel_cur_acceleration[2];
 
 int primitiveWallConverge(){
   //To test basic PD control
@@ -121,7 +125,7 @@ int primitive0(){
   frontSonar.enable();
   updateSonars();
 
-  int stopDist = 20;    //Within this distance, measured from the front, the robot turns away from the wall ahead. Prev. 15, 20. 12, 15 for sonar
+  int stopDist = 15;    //Within this distance, measured from the front, the robot turns away from the wall ahead. Prev. 15, 20. 12, 15, 20 for sonar
   int curDist = sonarDist[FRONTSONAR];
   float targetVelocity[2];
 
@@ -137,8 +141,8 @@ int primitive0(){
     head_wall_count++;
     if (wall_follow_direction == LEFT) {
 //      rotate(140);
-//      rotate(90);
-      rotate(45);
+      rotate(90);
+//      rotate(45);
     }
     else if (wall_follow_direction == RIGHT) {
       rotate(-90);
@@ -166,7 +170,8 @@ int primitive0(){
 }
 
 
-int primitive1(){
+//Experimental primitive1(), intended for base_speed_f ~= 60
+int primitive1_experimental(){
   //IR + sonar version
   //Moves forward while keeping one of the front-corners (on the wall-following-side) a set distance from the wall
   //Ideally takes input from a proximity sensor mounted at 45deg from the normal and directed at the wall being followed
@@ -191,6 +196,129 @@ int primitive1(){
   float multiplierRightTF = 6.0;  //When too far from wall. Prev: 40.0, 4.0, 2.0, 12.0
 //  float outerTurnWheelSpeedReducRatio = 3.6/4.0;  //Prev. 2/3. Reduce the speed of the wheel closest to the wall to this ratio of base_speed_f, to avoid clipping the wall
   int outerTurnSonarBufferDist = 15;  //15 worked well for leftfollow, test left. Prev: 20, 15, 11, 20, 15, 13, 12
+  
+  int state = NO_REFERENCE;
+  
+  static int init = TRUE;
+  base_control_mode = VELOCITY;
+  if (init) {
+//    disableSonars();
+    init = FALSE;
+  }
+
+  if (wall_follow_direction == LEFT) {
+    lfSonar.enable();
+    rfSonar.disable();
+    sensorDist = (float)getDist(LEFTIR);
+    distError = (float)(idealWallDistLeft) - sensorDist;
+  }
+  else if (wall_follow_direction == RIGHT) {
+    lfSonar.disable();
+    rfSonar.enable();
+    sensorDist = (float)getDist(RIGHTIR);
+    distError = (float)(idealWallDistRight) - sensorDist;
+  }
+
+  if (distError < -tolerance) {  //Too far from wall
+    if (wall_follow_direction == LEFT) {
+      velocityCorrection = -1*base_speed_f*multiplierLeftTF*distError/sensorDistRange;  //0 < error < 1
+      if (sonarDist[LFSONAR] < outerTurnSonarBufferDist) {
+//        targetVelocity[LEFT] = base_speed_f*outerTurnWheelSpeedReducRatio;
+//        targetVelocity[LEFT] = base_speed_f;
+        targetVelocity[LEFT] = base_speed_f * 0.3;  //Prev ...*: 0.5
+        targetVelocity[RIGHT] = base_speed_f;
+      }
+      else {
+        targetVelocity[LEFT] = base_speed_f - velocityCorrection;
+        targetVelocity[RIGHT] = base_speed_f;
+      }
+    }
+    else if (wall_follow_direction == RIGHT) {
+      velocityCorrection = -1*base_speed_f*multiplierRightTF*distError/sensorDistRange;  //0 < error < 1
+      //Handle corner-right, go straight (***no longer arc-wide right) while along the leading wall, otherwise correct as normal
+      if (sonarDist[RFSONAR] < outerTurnSonarBufferDist) {
+        targetVelocity[LEFT] = base_speed_f;
+        targetVelocity[RIGHT] = base_speed_f;
+//        targetVelocity[RIGHT] = base_speed_f*outerTurnWheelSpeedReducRatio;
+      }
+      else {
+        targetVelocity[LEFT] = base_speed_f;
+        targetVelocity[RIGHT] = base_speed_f - velocityCorrection;
+      }
+    }
+    if (targetVelocity[LEFT] < minVelocityTF) {
+      targetVelocity[LEFT] = minVelocityTF;
+    }
+    if (targetVelocity[RIGHT] < minVelocityTF) {
+      targetVelocity[RIGHT] = minVelocityTF;
+    }
+    state = TRANSIENT;
+  }
+  else if (tolerance < distError) {  //Too close to wall
+    if (wall_follow_direction == LEFT) {
+      velocityCorrection = base_speed_f*multiplierLeftTC*distError/sensorDistRange;  //0 < error < 1
+      targetVelocity[LEFT] = base_speed_f;
+      targetVelocity[RIGHT] = base_speed_f - velocityCorrection;
+    }
+    else if (wall_follow_direction == RIGHT) {
+      velocityCorrection = base_speed_f*multiplierRightTC*distError/sensorDistRange;  //0 < error < 1
+      targetVelocity[LEFT] = base_speed_f - velocityCorrection;
+      //Handle outer-turn right
+      targetVelocity[RIGHT] = base_speed_f;
+    }
+    if (targetVelocity[LEFT] < minVelocityTC) {
+      targetVelocity[LEFT] = minVelocityTC;
+    }
+    if (targetVelocity[RIGHT] < minVelocityTC) {
+      targetVelocity[RIGHT] = minVelocityTC;
+    }
+    state = TRANSIENT;
+  }
+  else {
+    targetVelocity[LEFT] = base_speed_f;
+    targetVelocity[RIGHT] = base_speed_f;
+    state = CONVERGED;
+  }
+
+  wheel_set_velocity[LEFT] = targetVelocity[LEFT];
+  wheel_set_velocity[RIGHT] = targetVelocity[RIGHT];
+  /*
+  Serial.print(sonarDist[5]);
+  Serial.print("   ");
+  Serial.print(distError);
+  Serial.print("   ");
+  Serial.print(wheel_set_velocity[LEFT]);
+  Serial.print("   ");
+  Serial.println(wheel_set_velocity[RIGHT]);
+  */
+  return state;
+}
+
+//primitive1_old[works well when base_speed_f = 40)
+int primitive1() {
+  //IR + sonar version
+  //Moves forward while keeping one of the front-corners (on the wall-following-side) a set distance from the wall
+  //Ideally takes input from a proximity sensor mounted at 45deg from the normal and directed at the wall being followed
+  //Corrects for error by reducing the velocity of one wheel, or the other, proportional to the error
+  //Adjusted outerTurn behaviour with sonarBufferDist
+  updateSonars();
+
+  int idealWallDistLeft = 450;    //This is the distance the robot will try to keep from the wall. 450, 360, 380 for leftIR.
+  int idealWallDistRight = 450;    //This is the distance the robot will try to keep from the wall.  for rightIR. Prev: 450, 360
+  int tolerance = 10;    //Plus or minus this from the wallDist. Prev: 2 for sonar, 10 for IR
+  float sensorDist = 0.0;
+  float sensorDistRange = 850.0;  //370 for sonars, 850 for IRs
+  float distError = 0.0;
+  float targetVelocity[2];
+  float velocityCorrection;
+  float minVelocityTC = 6.0;  //Prev: 6.0, 20.0, 6.0
+  float minVelocityTF = 10.0;  //Prev: 6.0, 20.0, 6.0
+  float multiplierLeftTC = 12.0;  //When too close to wall. Prev: 40.0, 4.0, 2.0, 6.0
+  float multiplierLeftTF = 9.0;  //When too far from wall. Prev: 40.0, 4.0, 2.0, 6.0, 4.0
+  float multiplierRightTC = 12.0;  //When too close to wall. Prev: 40.0, 4.0, 2.0, 12.0
+  float multiplierRightTF = 6.0;  //When too far from wall. Prev: 40.0, 4.0, 2.0, 12.0
+//  float outerTurnWheelSpeedReducRatio = 3.6/4.0;  //Prev. 2/3. Reduce the speed of the wheel closest to the wall to this ratio of base_speed_f, to avoid clipping the wall
+  int outerTurnSonarBufferDist = 15;  //15 worked well for leftfollow, test left. Prev: 20, 15, 11, 20, 
   
   int state = NO_REFERENCE;
   
@@ -287,127 +415,6 @@ int primitive1(){
   */
   return state;
 }
-
-//int primitive1_old[works well when base_speed_f = 40) (){
-//  //IR + sonar version
-//  //Moves forward while keeping one of the front-corners (on the wall-following-side) a set distance from the wall
-//  //Ideally takes input from a proximity sensor mounted at 45deg from the normal and directed at the wall being followed
-//  //Corrects for error by reducing the velocity of one wheel, or the other, proportional to the error
-//  //Adjusted outerTurn behaviour with sonarBufferDist
-//  updateSonars();
-//
-//  int idealWallDistLeft = 450;    //This is the distance the robot will try to keep from the wall. 450, 360, 380 for leftIR.
-//  int idealWallDistRight = 450;    //This is the distance the robot will try to keep from the wall.  for rightIR. Prev: 450, 360
-//  int tolerance = 10;    //Plus or minus this from the wallDist. Prev: 2 for sonar, 10 for IR
-//  float sensorDist = 0.0;
-//  float sensorDistRange = 850.0;  //370 for sonars, 850 for IRs
-//  float distError = 0.0;
-//  float targetVelocity[2];
-//  float velocityCorrection;
-//  float minVelocityTC = 6.0;  //Prev: 6.0, 20.0, 6.0
-//  float minVelocityTF = 10.0;  //Prev: 6.0, 20.0, 6.0
-//  float multiplierLeftTC = 12.0;  //When too close to wall. Prev: 40.0, 4.0, 2.0, 6.0
-//  float multiplierLeftTF = 9.0;  //When too far from wall. Prev: 40.0, 4.0, 2.0, 6.0, 4.0
-//  float multiplierRightTC = 12.0;  //When too close to wall. Prev: 40.0, 4.0, 2.0, 12.0
-//  float multiplierRightTF = 6.0;  //When too far from wall. Prev: 40.0, 4.0, 2.0, 12.0
-////  float outerTurnWheelSpeedReducRatio = 3.6/4.0;  //Prev. 2/3. Reduce the speed of the wheel closest to the wall to this ratio of base_speed_f, to avoid clipping the wall
-//  int outerTurnSonarBufferDist = 15;  //15 worked well for leftfollow, test left. Prev: 20, 15, 11, 20, 
-//  
-//  int state = NO_REFERENCE;
-//  
-//  static int init = TRUE;
-//  base_control_mode = VELOCITY;
-//  if (init) {
-////    disableSonars();
-//    init = FALSE;
-//  }
-//
-//  if (wall_follow_direction == LEFT) {
-//    lfSonar.enable();
-//    rfSonar.disable();
-//    sensorDist = (float)getDist(LEFTIR);
-//    distError = (float)(idealWallDistLeft) - sensorDist;
-//  }
-//  else if (wall_follow_direction == RIGHT) {
-//    lfSonar.disable();
-//    rfSonar.enable();
-//    sensorDist = (float)getDist(RIGHTIR);
-//    distError = (float)(idealWallDistRight) - sensorDist;
-//  }
-//
-//  if (distError < -tolerance) {  //Too far from wall
-//    if (wall_follow_direction == LEFT) {
-//      velocityCorrection = -1*base_speed_f*multiplierLeftTF*distError/sensorDistRange;  //0 < error < 1
-//      if (sonarDist[LFSONAR] < outerTurnSonarBufferDist) {
-////        targetVelocity[LEFT] = base_speed_f*outerTurnWheelSpeedReducRatio;
-//        targetVelocity[LEFT] = base_speed_f;
-//        targetVelocity[RIGHT] = base_speed_f;
-//      }
-//      else {
-//        targetVelocity[LEFT] = base_speed_f - velocityCorrection;
-//        targetVelocity[RIGHT] = base_speed_f;
-//      }
-//    }
-//    else if (wall_follow_direction == RIGHT) {
-//      velocityCorrection = -1*base_speed_f*multiplierRightTF*distError/sensorDistRange;  //0 < error < 1
-//      //Handle corner-right, go straight (***no longer arc-wide right) while along the leading wall, otherwise correct as normal
-//      if (sonarDist[RFSONAR] < outerTurnSonarBufferDist) {
-//        targetVelocity[LEFT] = base_speed_f;
-//        targetVelocity[RIGHT] = base_speed_f;
-////        targetVelocity[RIGHT] = base_speed_f*outerTurnWheelSpeedReducRatio;
-//      }
-//      else {
-//        targetVelocity[LEFT] = base_speed_f;
-//        targetVelocity[RIGHT] = base_speed_f - velocityCorrection;
-//      }
-//    }
-//    if (targetVelocity[LEFT] < minVelocityTF) {
-//      targetVelocity[LEFT] = minVelocityTF;
-//    }
-//    if (targetVelocity[RIGHT] < minVelocityTF) {
-//      targetVelocity[RIGHT] = minVelocityTF;
-//    }
-//    state = TRANSIENT;
-//  }
-//  else if (tolerance < distError) {  //Too close to wall
-//    if (wall_follow_direction == LEFT) {
-//      velocityCorrection = base_speed_f*multiplierLeftTC*distError/sensorDistRange;  //0 < error < 1
-//      targetVelocity[LEFT] = base_speed_f;
-//      targetVelocity[RIGHT] = base_speed_f - velocityCorrection;
-//    }
-//    else if (wall_follow_direction == RIGHT) {
-//      velocityCorrection = base_speed_f*multiplierRightTC*distError/sensorDistRange;  //0 < error < 1
-//      targetVelocity[LEFT] = base_speed_f - velocityCorrection;
-//      //Handle outer-turn right
-//      targetVelocity[RIGHT] = base_speed_f;
-//    }
-//    if (targetVelocity[LEFT] < minVelocityTC) {
-//      targetVelocity[LEFT] = minVelocityTC;
-//    }
-//    if (targetVelocity[RIGHT] < minVelocityTC) {
-//      targetVelocity[RIGHT] = minVelocityTC;
-//    }
-//    state = TRANSIENT;
-//  }
-//  else {
-//    targetVelocity[LEFT] = base_speed_f;
-//    targetVelocity[RIGHT] = base_speed_f;
-//    state = CONVERGED;
-//  }
-//
-//  wheel_set_velocity[LEFT] = targetVelocity[LEFT];
-//  wheel_set_velocity[RIGHT] = targetVelocity[RIGHT];
-//  /*
-//  Serial.print(sonarDist[5]);
-//  Serial.print("   ");
-//  Serial.print(distError);
-//  Serial.print("   ");
-//  Serial.print(wheel_set_velocity[LEFT]);
-//  Serial.print("   ");
-//  Serial.println(wheel_set_velocity[RIGHT]);
-//  */
-//  return state;
-//}
 
 int primitive2() {
   //Distance controller

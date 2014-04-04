@@ -1,8 +1,8 @@
 //_______________________________Variables and constants________________________________________
 
   //Wheels
-  float wheelRadius = 6.0;  //Radius in centimeters
-  float wheelSeparation = 20.0;  //Distance between wheels in cm
+  float wheelRadius = 3.5;  //Radius in centimeters
+  float wheelSeparation = 17.0;  //Distance between wheels in cm
   float ds = (1.0/encoderCPR) * 2 * 3.14159 * wheelRadius;  //In cm
   float dt; //In seconds
   float wheel_set_position[2] = {0,0};  //This set point, once set, will be reduced as the robot converges on the target distance from robot's frame of ref.
@@ -498,21 +498,24 @@ void testEncoders() {
 void moveDist(int distance) {
 //***Blocking function. Suspends program until the robot's wheels have moved the set distance.
 //Distance in cm
-  base_control_mode = POSITION;
-  wheel_set_position[LEFT] = distance;
-  wheel_set_position[RIGHT] = distance;
-  while (primitive2() == TRANSIENT) {
-    controlBase();
-  }
-  stopMotors();
+  moveDist(distance, distance);
 }
 
 void moveDist(int distanceL, int distanceR) {
 //***Blocking function. Suspends program until the robot's wheels have moved the set distances
 //Distances in cm
+  
+  //Multipliers used to correct for right side veering ahead in moveDist(). Cause of this veering is not yet known
+  float multiplierLeft = 1.05;
+  float multiplierRight = 1.0;
+  
   base_control_mode = POSITION;
-  wheel_set_position[LEFT] = distanceL;
-  wheel_set_position[RIGHT] = distanceR;
+  wheel_set_position[LEFT] = distanceL * multiplierLeft;
+  wheel_set_position[RIGHT] = distanceR * multiplierRight;
+  wheel_cur_position[LEFT] = 0.0;
+  wheel_cur_position[RIGHT] = 0.0;
+  //**It is imperative to reset the encoder counts at this point. Otherwise, lingering encoder counts will alter the kinematic computations in computePos.AndVel.()
+  resetEncoders();
   while (primitive2() == TRANSIENT) {
     controlBase();
   }
@@ -558,9 +561,11 @@ void rotate(int angle) {
     wheel_set_position[RIGHT] = -wheelRotDist*reverseDistCorr;
 //    Serial.println("pos angle");
   }
-  while (primitive2() == TRANSIENT) {
-    controlBase();
-  }
-  stopMotors();
+  moveDist(wheel_set_position[LEFT], wheel_set_position[RIGHT]);
+}
+
+void resetEncoders() {
+  encoders.getCountsAndResetM1();
+  encoders.getCountsAndResetM2();
 }
 

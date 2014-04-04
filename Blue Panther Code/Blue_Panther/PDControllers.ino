@@ -36,13 +36,14 @@ void PDController_base_position() {
   float pos_error[2];  //Will hold position errors (setpoint - actual). Max = ? relevant?
   float vel[2];  //Will hold current wheel velocities, which are already computed
   float df[2];  //Change in force applied to wheels (pwm value)
-  float tolerance = 1.1;  //In cm. Not feasible to move the precise distance. This is within how close the controller will get to it
+  //Tolerance in cm. Not feasible to move the precise distance. This is within how close the controller will get to it
+  float tolerance = 0.3;  //Prev. 1.1,
   
-  float max_speed = 300.0;    //300, 200, 150
+  float max_speed = 150.0;    //300, 200, 150, 300, 200
   
   //When printing data to monitor, software delay impacts pd controller. use gains k = 1.0, b = 0.6 for critically damped motion.
-  float k = 1.0;  //Prev: 0.5, 3.0, 3.0, 3.0,
-  float b = 0.2;  //Prev: 1.0, 1.7, 1.5, 1.4
+  float k = 2.0;  //Prev: 0.5, 3.0, 3.0, 3.0, 1.0, 3.0, 
+  float b = 0.4;  //Prev: 1.0, 1.7, 1.5, 1.4, 0.2, 0.2, 
   
   pos_error[LEFT] = wheel_set_position[LEFT] - wheel_cur_position[LEFT];
   pos_error[RIGHT] = wheel_set_position[RIGHT] - wheel_cur_position[RIGHT];
@@ -127,7 +128,7 @@ void PDController_base_velocity() {
   float df[2];  //Force applied to wheels (pwm value)
   
   float max_speed = 300.0;
-  float min_speed = 6.0;  //Prev: 6.0
+  float min_speed = 4.0;  //Prev: 6.0
   
   //When printing data to monitor, software delays impact pd controller. use gains k = 0.5, b = 0.1 for critically damped motion.
   float k = 2.5;   //Prev: 0.5, 1.0, 2.0,  2.5,  2.5
