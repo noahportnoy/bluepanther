@@ -505,7 +505,7 @@ void flameApproach2() {
   int prevServoXDir = curServoXDir;
   
   while ((minFlameVal < maxHeatSig[X]) && ((pmaxHeatSig[X] - 60) < maxHeatSig[X])) {  //Prev: 150, 60. While a flame can be seen and its heat-sig is becoming stronger with time
-//  flameStopVal = 9999;  //Temp. Disable stopping when clost to flame.
+//  flameStopVal = 9999;  //Temp. Disable stopping when close to flame.
 //  while (minFlameVal < maxHeatSig[X]) {  //While a flame can be seen
 //  while (1) {
     cycleServo(X, left30, right30, posStep, servoInterval);
@@ -540,13 +540,13 @@ void flameApproach2() {
     }
     //Turn toward the flame
     if (maxHeatSigPW[X] < (centerPos[X] - tolerance)) {  //If the flame is more than x degrees left of center, arc-turn left
-      setVelocities(10, 15);
+      setVelocities(40, 60);  //Prev: (10, 15), (20, 30)
     }
     else if ((centerPos[X] + tolerance) < maxHeatSigPW[X]) {  //If the flame is more than x degrees right of center, arc-turn right
-      setVelocities(15, 10);
+      setVelocities(60, 40);
     }
     else {    //If the flame is ahead, roughly
-      setVelocities(10);
+      setVelocities(40);
     }
     controlBase();
   }
