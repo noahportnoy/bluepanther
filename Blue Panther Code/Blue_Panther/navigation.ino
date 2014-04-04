@@ -157,53 +157,62 @@ void room1Nto3() {
   curRoomNum = 3;
 }
 
-//Todo: Needs testing
+//Todo Noah: Needs testing
 void room1Eto4() {
-//Room 1 east-exit to room 4
-//Assumes that room 1's var door location is known. Room 4's orientation does not need to be known.
+//Room 1 east-exit to room 1 north-exit
+  rotate(180);
   roomTapeExit();
-  moveDist(20);
-  rotate(90);
-  
-  if (room1_wall_location == NORTH) {
-    moveDist(90);
-  }
-  else if (room1_wall_location == SOUTH) {
-    moveDist(50);
-  }
   
   while(autoLineDetect() == false) {
-    wallFollow(RIGHT);
-    if (sonarDist[FRONTSONAR] < 20) {
-      rotate(180);
-      while(autoLineDetect() == false) {
-        wallFollow(LEFT);
-      }
-      break;
-    }
+    wallFollow(LEFT);
   }
+
   lineUpEnter();
-  curRoomNum = 4;
+  room1Nto4();
+  curRoomNum = 1;
 }
 
-//Todo: Needs testing
+//Todo Noah: Needs testing
 void room1Nto4() {
 //Room 1 north-exit to room 4
   locateRoom1VarDoorFromRoom1N();  //Determine the location of room 1's var door from room 1N
   roomTapeExit();
-  //Move to room 4
-  moveDist(40);
-  while(autoLineDetect() == false) {
-    wallFollow(LEFT);
-    if (sonarDist[FRONTSONAR] < 25) {
-      rotate(180);
-      while(autoLineDetect() == false) {
-        wallFollow(RIGHT);
-      }
-      lineUpEnter();
+  
+  int distToWallSwitch = 120;
+  boolean dogDetected = false;
+  odometer[0] = 0;
+
+  while(odometer[0] <= distToWallSwitch) {
+    wallFollow(RIGHT);
+    if(frontIRdist < 400) {
+      dogDetected = true;
+      dog_location = 2;
       break;
     }
   }
+
+  if(dog_location == 2) {
+    rotate(180);
+    while(autoLineDetect() == false) {
+      wallFollow(RIGHT);
+    }
+  } else {
+    while(autoLineDetect() == false) {
+      wallFollow(LEFT);
+      if(frontIRdist < 400) {
+        dog_location = 1;
+        break;
+      }
+    }
+  }
+
+  if(dog_location == 1) {
+    rotate(180);
+    while(autoLineDetect() == false) {
+      wallFollow(RIGHT);
+    }
+  }
+
   lineUpEnter();
   curRoomNum = 4;
 }
@@ -294,20 +303,38 @@ void room3to2() {
   curRoomNum = 2;
 }
 
-//Todo: Need to test with dog
+//Todo Noah: Needs testing
 void room3to4() {
 //***This method may need to change depending on what trinity say about the dog locations when room 4 is oriented opendown
   //Use a timer to measure this on an interval and allow time for primitive0 to rotate away from the wall
   roomTapeExit();
-  //Get to the left wall of room 4 and rightwallfollow until the entrance. If there is an head-obstacle, it can only be a dog.
-  //Determine its location, using odometry, turn 180, and then leftwallfollow until room 4 entrance.
-  moveDist(20);
-  rotate(-85);
-  moveDist(65);
-  rotate(-85);
-  moveDist(30);
+  
+  boolean dogDetected = false;
+  int distToWallSwitch = 120;
+  int distToDog1 = 160;
+  odometer[0] = 0;
+
+  while(odometer[0] < distToWallSwitch) {
+    wallFollow(LEFT);
+  }
   while(autoLineDetect() == false) {
     wallFollow(RIGHT);
+    if(frontIRdist < 400) {
+        dogDetected = true;
+        if(odometer[0] <= distToDog1) {
+          dog_location = ONE;
+        } else {
+          dog_location = TWO_THREE;
+        }
+        break;
+    }
+    }
+  }
+  if(dogDetected == true) {
+    rotate(180);
+    while(autoLineDetect() == false) {
+      wallFollow(LEFT);
+    }
   }
   lineUpEnter();
   curRoomNum = 4;
