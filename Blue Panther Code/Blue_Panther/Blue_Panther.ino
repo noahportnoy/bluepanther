@@ -276,9 +276,12 @@ long dlymilTest = 6000;
 void loop(){
   
   //NOAH - room3to4 test
-  //lineUp();
-  room1Nto4();
+  lineUp();
+  //Serial.println(getDist(FRONTIR));
+  room4to1();
   delay(10000);
+
+
   // NOAH - working dog detection and stop while wall following
   // wallFollow(RIGHT);
   // int sensorValue = getDist(FRONTIR);

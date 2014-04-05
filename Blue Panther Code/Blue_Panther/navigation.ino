@@ -61,7 +61,7 @@ void room1Eto2() {
   curRoomNum = 2;
 }
 
-// Noah - Needs testing for moveForwardUntilWall
+// Todo Noah - Needs testing for moveForwardUntilWall
 void room1Eto3() {
 //Room 1 east-exit to room 3
   
@@ -127,15 +127,17 @@ void room1Eto4() {
   room1Nto4();
 }
 
-//Todo Noah: Needs testing
+// Noah: When dog is at location 1 against north wall, robot can't see the dog
 void room1Nto4() {
-//Room 1 north exit to room 4
-  locateRoom1VarDoorFromRoom1N();  //Determine the location of room 1's var door from room 1N
+// Room 1 north exit to room 4
+  locateRoom1VarDoorFromRoom1N();  // Determine the location of room 1's var door from room 1N
   roomTapeExit();
-  
+  dog_location = UNKNOWN;
+
   int distToWallSwitch = 70;     // distance to wall switch location, outside of room 4, east hallway
   int distToDog2 = 120;          // from room 1 north exit to dog 2 (at most)
   odometer[0] = 0;
+  int frontirreading;
 
   // wall follow right to wall switch location
   while(odometer[0] <= distToWallSwitch) {
@@ -144,6 +146,7 @@ void room1Nto4() {
     // if we see the dog, it's at location 2
     if(getDist(FRONTIR) < 500) {
       dog_location = TWO;
+      Serial.println("Dog seen at TWO");
       break;
     }
   }
@@ -155,6 +158,7 @@ void room1Nto4() {
       wallFollow(LEFT);
       if(getDist(FRONTIR) < 500) {
         dog_location = TWO;
+        Serial.println("Dog seen at TWO");
         break;
       }
     }
@@ -172,15 +176,18 @@ void room1Nto4() {
   } else {
     while(autoLineDetect() == false) {
       wallFollow(LEFT);
-      if(getDist(FRONTIR) < 500) {
+      frontirreading = getDist(FRONTIR);
+      Serial.println(frontirreading);
+      if(frontirreading < 500) {
         dog_location = ONE;
+        //Serial.println("Dog seen at ONE");
         break;
       }
     }
   }
 
   // if we discovered the dog at location 1, turn around and wall follow right into the room 4
-  if(dog_location == 1) {
+  if(dog_location == ONE) {
     rotate(180);
     while(autoLineDetect() == false) {
       wallFollow(RIGHT);
@@ -226,7 +233,7 @@ void room2to3() {
   curRoomNum = 3;
 }
 
-//Todo Chi: Needs testing. Tested, just need to integrate portion that relies on room3to4 implementation
+// Todo Chi: Needs testing. Tested, just need to integrate portion that relies on room3to4 implementation
 void room2to4() {
 //Room 2 to room 4
   //Strategy: Left wall-follow almost to entrance of room 3; rotate 180 in the hallway then follow the room 3 to 4 navigation strategy.
@@ -244,26 +251,35 @@ void room2to4() {
   curRoomNum = 4;
 }
 
-//Todo Noah: Needs testing
+// Todo Noah: Need to correct against right wall after distToWallSwitch, then test
 void room3to1E() {
 //Room 3 exit to room 1 east-entrance
-  int distToWallSwitch = 150;
+  int distToWallSwitch = 140;
+  room1_wall_location = SOUTH;
   odometer[0] = 0;
 
   roomTapeExit();
   while(odometer[0] < distToWallSwitch) {
     wallFollow(RIGHT);
   }
+  ledOn();
+  //rotate(15);
+  moveForwardUntilWall(15);
+  rotate(-90);
 
-  if(room1_wall_location == NORTH) {
-    
-    while(autoLineDetect() == false) {
-      wallFollow(LEFT);
-    }
-  } else if(room1_wall_location == SOUTH) {
-    rotate(-90);
-    moveDist(15);
+  while(autoLineDetect() == false) {
+    wallFollow(RIGHT);
   }
+
+  // if(room1_wall_location == NORTH) {
+    
+  //   while(autoLineDetect() == false) {
+  //     wallFollow(LEFT);
+  //   }
+  // } else if(room1_wall_location == SOUTH) {
+  //   rotate(-90);
+  //   moveDist(15);
+  // }
 
   lineUpEnter();
   curRoomNum = 1;
@@ -278,13 +294,16 @@ void room3to2() {
   curRoomNum = 2;
 }
 
-//Todo Noah: Needs testing
+// Todo Noah: Needs testing
+// Gets confused when dog is at location 2, thinks it's a wall
+// Angled IRs might be seeing the dog, thinking it's a wall
 void room3to4() {
   roomTapeExit();
   
   boolean dogDetected = false;
   int distToWallSwitch = 110;   // wall switch location between 3 and 4
   int distToDog1 = 190;
+  int frontirreading;
   odometer[0] = 0;
 
   // wall follow left out of room 3 to wall switch location
@@ -298,8 +317,9 @@ void room3to4() {
   while(autoLineDetect() == false) {
     wallFollow(RIGHT);
     Serial.print("Dog: ");
-    Serial.println(getDist(FRONTIR));
-    if(getDist(FRONTIR) < 500) {
+    frontirreading = getDist(FRONTIR);
+    Serial.println(frontirreading);
+    if(frontirreading < 500) {
         Serial.print("DOG DETECTED ");
         dogDetected = true;
         if(odometer[0] <= distToDog1) {
@@ -316,8 +336,9 @@ void room3to4() {
   // if we discovered the dog, turn around and wall follow left into room 4
   if(dogDetected == true) {
     
-    moveDist(-5);
-    rotate(240);
+    rotate(-180);
+    // moveDist(-5);
+    // rotate(240);
 
     while(autoLineDetect() == false) {
       wallFollow(LEFT);
@@ -331,10 +352,11 @@ void room3to4() {
 void room4to1() {
   int distToWallSwitch = 150;
   int distToWallSwitch2 = 140;
+  room4_orientation = OPENUP;
   roomTapeExit();
 
   if(room4_orientation == OPENDOWN) {
-    moveDist(15);
+    moveForwardUntilWall(15);
     rotate(90);
 
     while(autoLineDetect() == false) {
@@ -347,12 +369,13 @@ void room4to1() {
       wallFollow(RIGHT);
       if(getDist(FRONTIR) < 500) {
         // dog seen at location 2
-        dog_location = 2;
+        dog_location = TWO;
+        Serial.println("Dog seen at TWO");
         break;
       }
     }
 
-    if(dog_location == 2) {
+    if(dog_location == TWO) {
       rotate(180);
       odometer[0] = 0;
 
