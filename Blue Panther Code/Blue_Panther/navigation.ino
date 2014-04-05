@@ -25,6 +25,32 @@ void passThrough(int wallDir) {
   }
 }
 
+// Chi - looks good!
+void determineRoom4OrientationFromRoom4() {
+  rfSonar.enable();
+  updateSonarsSeq();
+  if (sonarDist[RFSONAR] < 100) {
+    room4_orientation = OPENUP;
+  }
+  else {
+    room4_orientation = OPENDOWN;
+  }
+}
+
+// Chi - looks good!
+void moveForwardUntilWall(int stopDist) {
+  //Uses the front-mounted sonar
+  disableSonars();
+  frontSonar.enable();
+  updateSonarsSeq();
+  while(sonarDist[FRONTSONAR] > stopDist) {
+    updateSonars();
+    setVelocities(20);
+    controlBase();
+  }
+  stopMotors();
+}
+
 void room1Eto2() {
 //Room 1 east-exit to room 2
   roomTapeExit();
@@ -35,9 +61,10 @@ void room1Eto2() {
   curRoomNum = 2;
 }
 
-// Noah - looks good!
+// Noah - Needs testing for moveForwardUntilWall
 void room1Eto3() {
 //Room 1 east-exit to room 3
+  
   roomTapeExit();
   int distToWallSwitch = 40;
 
@@ -53,7 +80,7 @@ void room1Eto3() {
     }
 
   } else if(room1_wall_location == SOUTH) {
-    moveDist(20);
+    moveForwardUntilWall(15);
     rotate(90);
 
     while(autoLineDetect() == false) {
@@ -65,7 +92,7 @@ void room1Eto3() {
   curRoomNum = 3;
 }
 
-// Noah - looks good!
+// Noah - could use a little more testing, particularly for room1_wall_location == NORTH
 void room1Nto3() {
 //Room 1 north-exit to room 3
   //locateDogFromRoom1N();
@@ -75,8 +102,7 @@ void room1Nto3() {
   while(autoLineDetect() == false) {
     wallFollow(RIGHT);
   }
-
-  lineUpEnter();
+  roomTapeExit();
   curRoomNum = 1;
   room1Eto3();
 }
@@ -165,7 +191,6 @@ void room1Nto4() {
   curRoomNum = 4;
 }
 
-// TODO Chi: confirm working or should we modify it?
 void room2to1E() {
 //Room 2 exit to room 1 east-entrance
   disableSonars();
@@ -201,25 +226,20 @@ void room2to3() {
   curRoomNum = 3;
 }
 
-// TODO Chi: Put new method here
-// TODO Chi: Needs testing
+//Todo Chi: Needs testing. Tested, just need to integrate portion that relies on room3to4 implementation
 void room2to4() {
-//Room 2 to room 4, dog location does not matter
-//***Add dog-location-detection using odometry
+//Room 2 to room 4
+  //Strategy: Left wall-follow almost to entrance of room 3; rotate 180 in the hallway then follow the room 3 to 4 navigation strategy.
   roomTapeExit();
-  moveDist(20);
-  rotate(-90);
-  moveDist(90);
-  while(autoLineDetect() == false) {
-    wallFollow(RIGHT);
-    if (sonarDist[FRONTSONAR] < 20) {
-      rotate(180);
-      while(autoLineDetect() == false) {
-        wallFollow(LEFT);
-      }
-      break;
-    }
+  odometer[0] = 0.0;
+  float distToTravel = 140;
+  //Left wall-follow almost to entrance of room 3
+  while (odometer[0] < distToTravel) {
+    wallFollow(LEFT);
   }
+  //Rotate 180 in the hallway then follow the room 3 to 4 navigation strategy.
+  rotate(180);
+  //....room 3 to 4 strategy.......//
   lineUpEnter();
   curRoomNum = 4;
 }
@@ -402,60 +422,83 @@ void room4to1() {
 //  curRoomNum = 3;
 //}
 
-// TODO Chi: Replace with new method
-// TODO Chi: Needs testing
+//Todo Chi: Needs testing. Tested, works ~75% of time. 4-OPENDOWN to 2 needs most testing
 void room4to2() {
   dogAt1 = false;
   odometer[0] = 0;
   int odometerDogApproached = 0;
   frontSonar.enable();
   rfSonar.enable();
+  determineRoom4OrientationFromRoom4();
   roomTapeExit();
   if(room4_orientation == OPENUP) {
-   
-    moveDist(15);
-    rotate(-90);
     
-    while(odometer[0] < 20) {              //wall follow right, check for dog
+    moveForwardUntilWall(15);
+    rotate(-90);
+    odometer[0] = 0.0;
+    while(odometer[0] < 40) {              //wall follow right, check for dog
       wallFollow(RIGHT);
-      if(sonarDist[FRONTSONAR] < 25) {
+      if(getDist(FRONTIR) < 500) {
         dogAt1 = true;
         break;
       }
     }
-   
+  
     if(dogAt1 == true) {
       rotate(180);
       odometerDogApproached = odometer[0];
       odometer[0] = 0;
-      while(odometer[0] < (odometerDogApproached + 25)) {
+      //Move past room 4's doorway, before switching wall-following direction
+//      while(odometer[0] < (odometerDogApproached + 25)) {
+      while(odometer[0] < 60) {
         wallFollow(LEFT);
       }
-      while(sonarDist[RFSONAR] < 50) {
+      //Follow around room 4 until room 3 wall is on the left, before rotating to follow room 3's wall
+      odometer[0] = 0.0;
+      while(odometer[0] < 250) {
         wallFollow(RIGHT);
       }
-      moveDist(30);
-      rotate(-90);
-      moveDist(30);
-    } else if (dogAt1 == false) {  
-      while(sonarDist[FRONTSONAR] > 15) {        
-        wall_follow_direction = RIGHT;
-        primitive1();
-        controlBase();
+      rotate(-180);
+      //Follow room 3's wall until room 2's wall is on the left, before rotating to follow room 2's wall
+      odometer[0] = 0.0;
+      while(odometer[0] < 100) {
+        wallFollow(RIGHT);
       }
-      rotate(-90);
-      moveDist(140);
+      rotate(-180);
+      //Follow into room 2
+      while(autoLineDetect() == false) {
+        wallFollow(RIGHT);
+      }
+    } else if (dogAt1 == false) {
+      //Follow right wall until room 2's wall is on the left, before rotating to follow room 2's wall
+      odometer[0] = 0.0;
+      while(odometer[0] < 200) {
+        wallFollow(RIGHT);
+      }
+      rotate(-180);
+      //Follow into room 2
+      while(autoLineDetect() == false) {
+        wallFollow(RIGHT);
+      }
     }
-///////////////////////////////////////////////////////////    
+    ///////////////////////////////////////////////////////////
   } else if(room4_orientation == OPENDOWN) {
-      moveDist(15);
-      rotate(90);
-      moveDist(50);
-      rotate(-90);
-      moveDist(40);
-  }
-  while(autoLineDetect() == false) {
-    wallFollow(RIGHT);
+    //Follow right wall until room 3's wall is on the left, before rotating to follow room 3's wall on the right
+    odometer[0] = 0.0;
+    while(odometer[0] < 90) {
+      wallFollow(RIGHT);
+    }
+    rotate(-180);
+    //Follow right wall until room 2's wall is on the left, before rotating to follow room 2's wall
+    odometer[0] = 0.0;
+    while(odometer[0] < 70) {
+      wallFollow(RIGHT);
+    }
+    rotate(-180);
+    //Follow into room 2
+    while(autoLineDetect() == false) {
+      wallFollow(RIGHT);
+    }
   }
   lineUpEnter();
   curRoomNum = 2;

@@ -277,7 +277,7 @@ void loop(){
   
   //NOAH - room3to4 test
   //lineUp();
-  room1Nto3();
+  room1Nto4();
   delay(10000);
   // NOAH - working dog detection and stop while wall following
   // wallFollow(RIGHT);
