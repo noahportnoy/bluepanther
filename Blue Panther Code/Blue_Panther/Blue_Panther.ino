@@ -160,8 +160,8 @@ LineSensor rightLineSensor(rightLineSensorPin);
 
 LineSensor *lineSensor[2] = {&leftLineSensor, &rightLineSensor};
 
-int leftWhite = 50;  //Prev: 500. Minimum value for line sensor that can be accapted as white.
-int rightWhite = 50;  //Prev: 700
+int leftWhite = 80;  //Prev: 500. Minimum value for line sensor that can be accapted as white.
+int rightWhite = 80;  //Prev: 700
 
 long dlyMinWhiteLineInterval = 20;  //The time interval over which a continuous white reading will be accepted as a white line, not a stray mark.
 
@@ -276,8 +276,8 @@ long dlymilTest = 6000;
 void loop(){
   
   //NOAH - room3to4 test
-  lineUp();
-  room3to4();
+  //lineUp();
+  room1Nto3();
   delay(10000);
   // NOAH - working dog detection and stop while wall following
   // wallFollow(RIGHT);
