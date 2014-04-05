@@ -9,6 +9,7 @@ int startRoomNum;  //Room the robot started in, assigned by arbitrary-start meth
 int curRoomNum;  //The room the robot enters, or has just exited by arbitrary start. This is updated each time the robot enters a new room.
 
 int room4NextRoom = 0;
+int room4to1ArrivalEntrance = 0;
 boolean specialExitRoom1 = false;
 
 void roomTapeExit() {
@@ -352,6 +353,7 @@ void room3to4() {
 void room4to1() {
   int distToWallSwitch = 150;
   int distToWallSwitch2 = 140;
+  int distToWallSwitch3 = 50;
   room4_orientation = OPENUP;
   roomTapeExit();
 
@@ -363,9 +365,12 @@ void room4to1() {
       wallFollow(LEFT);
     }
 
-  } else if(room4_orientation == OPENUP) {
+    room4to1ArrivalEntrance = EAST;
 
-    while(autoLineDetect() == false) {
+  } else if(room4_orientation == OPENUP) {
+    odometer[0] = 0;
+
+    while(odometer[0] < distToWallSwitch3) {
       wallFollow(RIGHT);
       if(getDist(FRONTIR) < 500) {
         // dog seen at location 2
@@ -391,12 +396,21 @@ void room4to1() {
       while(autoLineDetect() == false) {
         wallFollow(RIGHT);
       }
+
+      room4to1ArrivalEntrance = NORTH;
+
+    } else {
+      while(autoLineDetect() == false) {
+        wallFollow(LEFT);
+      }
+
+      room4to1ArrivalEntrance = NORTH;
     }
   }
 
 
 
-  lineUpEnter();
+  lineUp();
   curRoomNum = 1;
 }
 
@@ -528,6 +542,8 @@ void room4to2() {
 }
 
 //Todo NOAH: Needs testing
+
+// On loopback, might want to use odometry and rotation over seeing dog again at location 1
 void room4to3() {
   odometer[0] = 0;
   int distToWallSwitch1 = 60;     // distance from room4 up entrance to wall switch between 4 and 3
@@ -637,22 +653,22 @@ void goToNextRoom() {
           room3to4();
           break;
         case 4:
-          //room4to1N();
-          pass_through = true;
-          pass_through_direction = LEFT;
+          room4to1();
           break;
       }
     }
     else if (room1_start_room_exit == NORTH) {
     //Figure out dog location
-    //Go from 1N to 1E (passthrough), then -> 2 -> 3 -> 4 -> 1N (-> passthrough) 1E
+    //Current plan: 1N -> 4 -> 3 -> 2 -> 1E
+    //Plan B: Go from 1N to 1E (passthrough), then -> 2 -> 3 -> 4 -> 1N (-> passthrough) 1E
       switch (curRoomNum) {
         case 1:
-          rotate(180);
-          moveDist(10);
-          passThrough(LEFT);
-          roomTapeExit();
-          room1Eto2();
+          room1Nto4();
+          // rotate(180);
+          // moveDist(10);
+          // passThrough(LEFT);
+          // roomTapeExit();
+          // room1Eto2();
           break;
         case 2:
           room2to3();
@@ -661,46 +677,50 @@ void goToNextRoom() {
           room3to4();
           break;
         case 4:
-          //room4to1N();
+          room4to1();
           break;
       }
     }
   }
   else if (startRoomNum == 2) {
-  //2 -> 3 -> 4 -> 1N (->passthrough) -> 1E -> 2
+  // 2 -> 1E -> 1N (passthrough) -> 4 -> 3 -> 2
+  
+  //Old: 2 -> 3 -> 4 -> 1N (->passthrough) -> 1E -> 2
     switch (curRoomNum) {
       case 2:
-        room2to3();
+        room2to1E();
         break;
       case 3:
-        room3to4();
+        room3to2();
         break;
       case 4:
+        room4to3();
         //room4to1N();
-        pass_through = true;
-        pass_through_direction = LEFT;
+        //pass_through = true;
+        //pass_through_direction = LEFT;
         break;
       case 1:
-        room1Eto2();
+        passThrough(LEFT);
+        room1Nto4();
         break;
     }
   }
   else if (startRoomNum == 3) {
-  //3 -> 4 -> 1N (-> Pass through to 1E) -> 2 -> 3
+  
+  // 3 -> 2 -> 1E -> 1N (passthrough) -> 4 -> 3
     switch (curRoomNum) {
       case 3:
-        room3to4();
+        room3to2();
         break;
       case 4:
-        //room4to1N();
-        pass_through = true;  //Tell the superior flameHunt program that it should not exit180 since the robot will be facing outwards at another exit, not inwards where it started
-        pass_through_direction = LEFT;
+        room4to3();
         break;
       case 1:
-        room1Eto2();
+        passThrough(LEFT);
+        room1Nto4();
         break;
       case 2:
-        room2to3();
+        room2to1E();
         break;
     }
   }
@@ -708,9 +728,12 @@ void goToNextRoom() {
     //4 -> 1N (-> passthrough) 1E -> 2 -> 3 -> 4
     switch (curRoomNum) {
       case 4:
-        //room4to1N();
-        pass_through = true;
-        pass_through_direction = LEFT;
+        room4to1();
+
+        if(room4to1ArrivalEntrance == NORTH) {
+          pass_through = true;
+          pass_through_direction = RIGHT;
+        }
         break;
       case 1:
         room1Eto2();
