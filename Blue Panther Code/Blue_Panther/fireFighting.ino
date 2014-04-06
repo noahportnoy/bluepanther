@@ -22,8 +22,8 @@ void fireFight(){
   arbitraryStart();   //Gets to doorway of starting room (facing outward) and stops
   roomDetermine();  //Determine the starting room using sonar(s)
   flameHunt();  //Navigates to the next room and searches for candle repeatedly, until candle is located and extinguished
-//  arbitraryStart();
-  exitLeft();
+  arbitraryStart();
+  // exitLeft();
   roomTapeExit();
   returnHome();  //Drives the robot back to the starting room without entering any other rooms
   finalStop();  //Stops the robot safely inside the room where it started.
