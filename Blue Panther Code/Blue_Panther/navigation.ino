@@ -75,7 +75,6 @@ void room1Eto3() {
     while(odometer[0] < distToWallSwitch) {
       wallFollow(RIGHT);
     }
-    ledOn();
     while(autoLineDetect() == false) {
       wallFollow(LEFT);
     }
@@ -303,7 +302,6 @@ void room3to4() {
   
   boolean dogDetected = false;
   int distToWallSwitch = 110;   // wall switch location between 3 and 4
-  int distToDog1 = 190;
   int frontirreading;
   odometer[0] = 0;
 
@@ -312,49 +310,33 @@ void room3to4() {
     wallFollow(LEFT);
   }
 
-  // wall follow right
-  // if we have traveled less than distToDog1, the dog is at location 1
-  // otherwise, the dog is at TWO_THREE
+  rotate(180);
+
   while(autoLineDetect() == false) {
-    wallFollow(RIGHT);
-    Serial.print("Dog: ");
-    frontirreading = getDist(FRONTIR);
-    Serial.println(frontirreading);
-    if(frontirreading < 500) {
-        Serial.print("DOG DETECTED ");
-        dogDetected = true;
-        if(odometer[0] <= distToDog1) {
-          Serial.println("AT LOCATION ONE");
-          dog_location = ONE;
-        } else {
-          Serial.println("AT LOCATION TWO_THREE");
-          dog_location = TWO_THREE;
-        }
-        break;
+    wallFollow(LEFT);
+    if(getDist(FRONTIR) < 500) {
+      dog_location = TWO_THREE;
+      break;
     }
   }
 
-  // if we discovered the dog, turn around and wall follow left into room 4
-  if(dogDetected == true) {
-    
-    rotate(-180);
-    // moveDist(-5);
-    // rotate(240);
+  if(dog_location == TWO_THREE) {
+    rotate(180);
 
     while(autoLineDetect() == false) {
-      wallFollow(LEFT);
+      wallFollow(RIGHT);
     }
   }
+  
   lineUpEnter();
   curRoomNum = 4;
 }
-
 // TODO NOAH: needs testing
 void room4to1() {
   int distToWallSwitch = 150;
   int distToWallSwitch2 = 140;
   int distToWallSwitch3 = 50;
-  room4_orientation = OPENUP;
+  determineRoom4OrientationFromRoom4();
   roomTapeExit();
 
   if(room4_orientation == OPENDOWN) {
@@ -410,7 +392,7 @@ void room4to1() {
 
 
 
-  lineUp();
+  lineUpEnter();
   curRoomNum = 1;
 }
 
@@ -545,6 +527,8 @@ void room4to2() {
 
 // On loopback, might want to use odometry and rotation over seeing dog again at location 1
 void room4to3() {
+	determineRoom4OrientationFromRoom4();
+	roomTapeExit();
   odometer[0] = 0;
   int distToWallSwitch1 = 60;     // distance from room4 up entrance to wall switch between 4 and 3
   int distToWallSwitch2 = 110;    // distance from dog location 1 to wall switch location outside room 4, east hallway
@@ -670,57 +654,56 @@ void goToNextRoom() {
           // roomTapeExit();
           // room1Eto2();
           break;
-        case 2:
-          room2to3();
+        case 4:
+          room4to3();
           break;
         case 3:
-          room3to4();
+          room3to2();
           break;
-        case 4:
-          room4to1();
+        case 2:
+          room2to1E();
           break;
       }
     }
   }
   else if (startRoomNum == 2) {
-  // 2 -> 1E -> 1N (passthrough) -> 4 -> 3 -> 2
-  
+  //Current: 2 -> 1E -> 1N (passthrough) -> 4 -> 3 -> 2
   //Old: 2 -> 3 -> 4 -> 1N (->passthrough) -> 1E -> 2
     switch (curRoomNum) {
       case 2:
         room2to1E();
+		pass_through = true;
+		pass_through_direction = LEFT;
         break;
-      case 3:
-        room3to2();
+      case 1:
+        room1Nto4();
         break;
       case 4:
         room4to3();
-        //room4to1N();
-        //pass_through = true;
-        //pass_through_direction = LEFT;
         break;
-      case 1:
-        passThrough(LEFT);
-        room1Nto4();
+      case 3:
+        room3to2();
         break;
     }
   }
   else if (startRoomNum == 3) {
   
-  // 3 -> 2 -> 1E -> 1N (passthrough) -> 4 -> 3
+  // 3 -> 2 -> 1E -> (1N passthrough) -> 4 -> 3
     switch (curRoomNum) {
       case 3:
         room3to2();
         break;
-      case 4:
-        room4to3();
-        break;
-      case 1:
-        passThrough(LEFT);
-        room1Nto4();
-        break;
       case 2:
         room2to1E();
+		pass_through = true;
+		pass_through_direction = LEFT;
+        break;
+      case 1:
+        //passThrough(LEFT);
+        room1Nto4();
+        break;
+      case 4:
+        room4to3();
         break;
     }
   }
