@@ -529,7 +529,7 @@ void room4to2() {
       rotate(-180);
       //Follow room 3's wall until room 2's wall is on the left, before rotating to follow room 2's wall
       odometer[0] = 0.0;
-      while(odometer[0] < 100) {
+      while(odometer[0] < 85) {
         wallFollow(RIGHT);
       }
       rotate(-180);

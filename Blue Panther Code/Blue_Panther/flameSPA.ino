@@ -27,7 +27,7 @@
   //Add an offset to better suit the servo's desired scanning range
   //Center potition is straight ahead for horizontal, and level for vertical.
   //Horizontal zero degrees is understood to be 90 degrees left of center. Vertical zero is defined to be 90 degrees less than level.
-  int servoOffset[2] = {32, -57};  //Clockwise, or upwards rotation of servo from zero degrees. Lower moves the servo towards zero.
+  int servoOffset[2] = {26, -62};  //Clockwise, or upwards rotation of servo from zero degrees. Lower moves the servo towards zero.
   int sensorFlamePointOffset[2] = {-8, -12};  //How much to adjust/correct the robot arm to point the hose directly at flame, after obtaining max readings from flame scans
   
   //Key positions
@@ -38,7 +38,7 @@
   int left22 = 70;    //22 degrees left of center
   int right22 = 110;    //22 degrees right of center
   int left30 = 70;
-  int right30 = 110;
+  int right30 = 130;
   int left45 = 50;
   int right45 = 135;
     //Vertical servo-90 degrees means pointing level
@@ -312,6 +312,7 @@ void verifyExtinguish(){
       //Go forward a little, get closer to the flame.
       robotFlamePoint();
       moveDist(5);
+	  flameScanFull(X);
       flameExtinguishFlood();
     }
     //Otherwise, if it's extinguished
@@ -504,7 +505,9 @@ void flameApproach2() {
   int curServoXDir = getServoDir(X);
   int prevServoXDir = curServoXDir;
   
-  while ((minFlameVal < maxHeatSig[X]) && ((pmaxHeatSig[X] - 60) < maxHeatSig[X])) {  //Prev: 150, 60. While a flame can be seen and its heat-sig is becoming stronger with time
+//  while ((minFlameVal < maxHeatSig[X]) && ((pmaxHeatSig[X] - 60) < maxHeatSig[X])) {  //Prev: 150, 60. While a flame can be seen and its heat-sig is becoming stronger with time
+  while ((minFlameVal < maxHeatSig[X]) && ((pmaxHeatSig[X] - 150) < maxHeatSig[X])) {  //Prev: 150, 60. While a flame can be seen and its heat-sig is becoming stronger with time
+
 //  flameStopVal = 9999;  //Temp. Disable stopping when close to flame.
 //  while (minFlameVal < maxHeatSig[X]) {  //While a flame can be seen
 //  while (1) {
@@ -519,11 +522,11 @@ void flameApproach2() {
       tempMaxHeatSig = 0;
       tempMaxHeatSigPW = getServoPos(X);
       prevServoXDir = curServoXDir;
-/*
+///*
       Serial.print(maxHeatSigPW[X]);
       Serial.print("   ");
       Serial.println(maxHeatSig[X]);
-*/
+//*/
     }
 
     int tempMaxFlameSensorIndex = readFlameSensor(X);
@@ -540,13 +543,13 @@ void flameApproach2() {
     }
     //Turn toward the flame
     if (maxHeatSigPW[X] < (centerPos[X] - tolerance)) {  //If the flame is more than x degrees left of center, arc-turn left
-      setVelocities(40, 60);  //Prev: (10, 15), (20, 30)
+      setVelocities(20, 30);  //Prev: (10, 15), (20, 30), (40, 60)
     }
     else if ((centerPos[X] + tolerance) < maxHeatSigPW[X]) {  //If the flame is more than x degrees right of center, arc-turn right
-      setVelocities(60, 40);
+      setVelocities(30, 20);
     }
     else {    //If the flame is ahead, roughly
-      setVelocities(40);
+      setVelocities(30);
     }
     controlBase();
   }
