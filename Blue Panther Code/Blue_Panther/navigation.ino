@@ -63,6 +63,20 @@ void room1Eto2() {
 }
 
 // Noah - looks good!
+void room1Nto2() {
+//Room 1 north-exit to room 3
+  locateRoom1VarDoorFromRoom1N();  // Determine the location of room 1's var door from room 1N
+  rotate(180);
+  roomTapeExit();
+
+  while(autoLineDetect() == false) {
+    wallFollow(RIGHT);
+  }
+  lineUp();
+  room1Eto2();
+}
+
+// Noah - looks good!
 void room1Eto3() {
 //Room 1 east-exit to room 3
 
@@ -70,6 +84,7 @@ void room1Eto3() {
   int distToWallSwitch = 40;
 
   if(room1_wall_location == NORTH) {
+    Serial.println("wall is NORTH");
     odometer[0] = 0;
 
     while(odometer[0] < distToWallSwitch) {
@@ -80,6 +95,7 @@ void room1Eto3() {
     }
 
   } else if(room1_wall_location == SOUTH) {
+    Serial.println("wall is SOUTH");
     moveForwardUntilWall(15);
     rotate(90);
 
@@ -92,7 +108,7 @@ void room1Eto3() {
   curRoomNum = 3;
 }
 
-// Noah - Needs testing
+// Noah - looks good!
 void room1Nto3() {
 //Room 1 north-exit to room 3
   locateRoom1VarDoorFromRoom1N();  // Determine the location of room 1's var door from room 1N
@@ -102,7 +118,7 @@ void room1Nto3() {
   while(autoLineDetect() == false) {
     wallFollow(RIGHT);
   }
-  delay(2000);
+  lineUp();
   room1Eto3();
 }
 
@@ -230,7 +246,7 @@ void room2to3() {
   curRoomNum = 3;
 }
 
-// Todo Chi: Test for room3to4 method integration
+// Noah - looks good!
 void room2to4() {
 //Room 2 to room 4
   int distToWallSwitch = 80;   // wall switch location between 3 and 4
@@ -572,16 +588,17 @@ void room4to2() {
   curRoomNum = 2;
 }
 
-//Todo NOAH: Needs testing
+// Noah - looks good!
 void room4to3() {
 	determineRoom4OrientationFromRoom4();
 	roomTapeExit();
   odometer[0] = 0;
   int distToWallSwitch1 = 60;     // distance from room4 up entrance, left, to wall switch between 4 and 3
   int distToWallSwitch2 = 110;    // distance from dog location 1 to wall switch location outside room 4, east hallway
-  int distToWallSwitch3 = 270;    // distance from dog location 1 to wall switch location between 4 and 3
+  int distToWallSwitch3 = 320;    // distance from dog location 1 to wall switch location between 4 and 3
   int distToWallSwitch4 = 90;     // distance from room4 down entrance to wall switch between 4 and 3
-  int distToWallSwitch5 = 250;    // distance from room4 up entrance, right, to wall switch between 4 and 3
+  int distToWallSwitch5 = 290;    // distance from room4 up entrance, right, to wall switch between 4 and 3
+  dog_location = ONE;
 
   // if room 4 open up
   if(room4_orientation == OPENUP) {
@@ -602,7 +619,8 @@ void room4to3() {
 
       // if the dog was discovered at location 1, turn around and loop around room 4 to other side of dog
       if(dog_location == ONE) {
-        rotate(180);
+        moveDist(-5);
+        rotate(150);
         odometer[0] = 0;
 
         // wall follow left until wall switch 2 location outside room 4, east hallway
@@ -722,8 +740,8 @@ void goToNextRoom() {
     switch (curRoomNum) {
       case 2:
         room2to1E();
-		pass_through = true;
-		pass_through_direction = LEFT;
+    		pass_through = true;
+    		pass_through_direction = LEFT;
         break;
       case 1:
         room1Nto4();
@@ -745,8 +763,8 @@ void goToNextRoom() {
         break;
       case 2:
         room2to1E();
-		pass_through = true;
-		pass_through_direction = LEFT;
+    		pass_through = true;
+    		pass_through_direction = LEFT;
         break;
       case 1:
         //passThrough(LEFT);
@@ -808,16 +826,20 @@ void locateDogFromRoom1N() {
 */
 }
 
-void locateRoom1VarDoorFromRoom1N() {
+void locateRoom1VarDoorFromRoom1N() {   // was north for < 180, else south
 //Determine the location of room 1's variable door from room 1N
   lbSonar.enable();
   delay(50);    //Allow any previous echo to clear
   int leftBackDist = lbSonar.read();
   if (room1_wall_location == UNKNOWN) {
-    if (leftBackDist < 180) {
+    if (leftBackDist < 110) {
+      Serial.print("wall is at NORTH. leftBackDist is ");
+      Serial.println(leftBackDist);
       room1_wall_location = NORTH;
     }
     else {
+      Serial.print("wall is at SOUTH. leftBackDist is ");
+      Serial.println(leftBackDist);
       room1_wall_location = SOUTH;
     }
   }
@@ -1013,18 +1035,44 @@ void exit180() {
 void returnHome() {
 //Assumes robot is in a random position and direction inside a room.
 //Takes robot out of the current room, and directly to the destination room.
+  int room1entrance;
+
   if(curRoomNum == 1) {
-    switch(startRoomNum) {
-      case 2:
-        room1Eto2();
-        break;
-      case 3:
-        room1Eto3(); //can also use room1Nto3();
-        break;
-      case 4:
-        room1Eto4(); //can also use room1Nto4();
-        break;
+
+    if(sonarDist[REARSONAR] < 90) {
+      room1entrance = NORTH;
+    } else {
+      room1entrance = EAST;
     }
+
+
+    if( room1entrance == EAST ) {
+      switch(startRoomNum) {
+        case 2:
+          room1Eto2();
+          break;
+        case 3:
+          room1Eto3(); //can also use room1Nto3();
+          break;
+        case 4:
+          room1Eto4(); //can also use room1Nto4();
+          break;
+      }
+
+    } else if( room1entrance == NORTH ) {
+      switch(startRoomNum) {
+        case 2:
+          room1Nto2();
+          break;
+        case 3:
+          room1Nto3();
+          break;
+        case 4:
+          room1Nto4();
+          break;
+      }
+    }
+    
   }
   else if(curRoomNum == 2) {
     switch(startRoomNum) {
@@ -1041,7 +1089,7 @@ void returnHome() {
   }
   else if(curRoomNum == 3) {
     switch(startRoomNum) {
-      case 1:   room3to1E();  //can also use room3to1N();
+      case 1:   room3to1E();
         break;
       case 2:   room3to2();
         break;
@@ -1052,6 +1100,7 @@ void returnHome() {
   else if(curRoomNum == 4) {
     switch(startRoomNum) {
       case 1:
+        room4to1();           // <-- This wasn't here before, is it okay?
         //room4to1E();
         break;
       case 2:

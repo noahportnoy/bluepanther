@@ -278,7 +278,7 @@ void loop(){
   //NOAH - room test
   //Serial.println(getDist(FRONTIR));
     lineUp();
-    room4to1();
+    room1Nto2();
     delay(15000);
 
 
