@@ -84,7 +84,6 @@ void room1Eto3() {
   int distToWallSwitch = 40;
 
   if(room1_wall_location == NORTH) {
-    Serial.println("wall is NORTH");
     odometer[0] = 0;
 
     while(odometer[0] < distToWallSwitch) {
@@ -95,7 +94,6 @@ void room1Eto3() {
     }
 
   } else if(room1_wall_location == SOUTH) {
-    Serial.println("wall is SOUTH");
     moveForwardUntilWall(15);
     rotate(90);
 
@@ -159,7 +157,6 @@ void room1Nto4() {
     // if we see the dog, it's at location 2
     if(getDist(FRONTIR) < 500) {
       dog_location = TWO;
-      Serial.println("Dog seen at TWO");
       break;
     }
   }
@@ -171,7 +168,6 @@ void room1Nto4() {
       wallFollow(LEFT);
       if(getDist(FRONTIR) < 500) {
         dog_location = TWO;
-        Serial.println("Dog seen at TWO");
         break;
       }
     }
@@ -189,9 +185,7 @@ void room1Nto4() {
   } else {
     while(autoLineDetect() == false) {
       wallFollow(LEFT);
-      frontirreading = getDist(FRONTIR);
-      Serial.println(frontirreading);
-      if(frontirreading < 500) {
+      if(getDist(FRONTIR) < 500) {
         dog_location = ONE;
         //Serial.println("Dog seen at ONE");
         break;
@@ -307,7 +301,7 @@ void room3to1E() {
 
   //rotate(15);
   moveForwardUntilWall(15);
-  rotate(-90);
+  rotate(-100);
 
   while(autoLineDetect() == false) {
     wallFollow(RIGHT);
@@ -1038,6 +1032,9 @@ void returnHome() {
   int room1entrance;
 
   if(curRoomNum == 1) {
+    delay(50);
+    rfSonar.enable();
+    sonarDist[REARSONAR] = rfSonar.read();
 
     if(sonarDist[REARSONAR] < 90) {
       room1entrance = NORTH;

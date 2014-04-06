@@ -277,9 +277,11 @@ void loop(){
   
   //NOAH - room test
   //Serial.println(getDist(FRONTIR));
-    lineUp();
-    room1Nto2();
-    delay(15000);
+  //lineUp();
+  //room1Nto2();
+  //delay(15000);
+
+  fireFight();
 
 
   // NOAH - working dog detection and stop while wall following
