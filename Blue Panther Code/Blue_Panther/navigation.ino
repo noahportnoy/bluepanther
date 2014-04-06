@@ -702,51 +702,52 @@ void goToNextRoom() {
     }
     else if (room1_start_room_exit == NORTH) {
     //Figure out dog location
-    //Current plan: 1N -> 4 -> 3 -> 2 -> 1E
-    //Plan B: Go from 1N to 1E (passthrough), then -> 2 -> 3 -> 4 -> 1N (-> passthrough) 1E
+    // Current: Go from 1N to 1E (passthrough), then -> 2 -> 3 -> 4 -> 1
+    // Plan B: 1N -> 4 -> 3 -> 2 -> 1E
       switch (curRoomNum) {
         case 1:
-          room1Nto4();
+          room1Nto2();
           // rotate(180);
           // moveDist(10);
           // passThrough(LEFT);
           // roomTapeExit();
           // room1Eto2();
           break;
-        case 4:
-          room4to3();
+        case 2:
+          room2to3();
           break;
         case 3:
-          room3to2();
+          room3to4();
           break;
-        case 2:
-          room2to1E();
+        case 4:
+          room4to1();
           break;
       }
     }
   }
   else if (startRoomNum == 2) {
-  //Current: 2 -> 1E -> 1N (passthrough) -> 4 -> 3 -> 2
-  //Old: 2 -> 3 -> 4 -> 1N (->passthrough) -> 1E -> 2
+  // Current: 2 -> 3 -> 4 -> 1 -> 2
+  // Plan B: 2 -> 1E -> 1N (passthrough) -> 4 -> 3 -> 2
     switch (curRoomNum) {
       case 2:
-        room2to1E();
-    		pass_through = true;
-    		pass_through_direction = LEFT;
-        break;
-      case 1:
-        room1Nto4();
-        break;
-      case 4:
-        room4to3();
+        room2to3();
+        // room2to1E();
+    		// pass_through = true;
+    		// pass_through_direction = LEFT;
         break;
       case 3:
-        room3to2();
+        room3to4();
         break;
+      case 4:
+        room4to1();
+        break;
+      // case 1:
+      //   room1to2();  // fix
+      //   break;
     }
   }
   else if (startRoomNum == 3) {
-  
+
   // 3 -> 2 -> 1E -> (1N passthrough) -> 4 -> 3
     switch (curRoomNum) {
       case 3:
