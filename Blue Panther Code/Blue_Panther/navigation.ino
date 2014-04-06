@@ -132,7 +132,6 @@ void room1Nto4() {
 // Room 1 north exit to room 4
   locateRoom1VarDoorFromRoom1N();  // Determine the location of room 1's var door from room 1N
   roomTapeExit();
-  dog_location = UNKNOWN;
 
   int distToWallSwitch = 70;     // distance to wall switch location, outside of room 4, east hallway
   int distToDog2 = 120;          // from room 1 north exit to dog 2 (at most)
@@ -246,7 +245,7 @@ void room2to4() {
   }
   //Rotate 180 in the hallway then follow the room 3 to 4 navigation strategy.
   rotate(180);
-  //....room 3 to 4 strategy.......//
+  //....room 3 to 4 strategy.......// MARK //
   lineUpEnter();
   curRoomNum = 4;
 }
@@ -255,14 +254,13 @@ void room2to4() {
 void room3to1E() {
 //Room 3 exit to room 1 east-entrance
   int distToWallSwitch = 140;
-  room1_wall_location = SOUTH;
   odometer[0] = 0;
 
   roomTapeExit();
   while(odometer[0] < distToWallSwitch) {
     wallFollow(RIGHT);
   }
-  ledOn();
+
   //rotate(15);
   moveForwardUntilWall(15);
   rotate(-90);
@@ -294,15 +292,11 @@ void room3to2() {
   curRoomNum = 2;
 }
 
-// Todo Noah: Needs testing
-// Gets confused when dog is at location 2, thinks it's a wall
-// Angled IRs might be seeing the dog, thinking it's a wall
+// Noah - I deem this acceptable!
 void room3to4() {
   roomTapeExit();
   
-  boolean dogDetected = false;
-  int distToWallSwitch = 110;   // wall switch location between 3 and 4
-  int frontirreading;
+  int distToWallSwitch = 120;   // wall switch location between 3 and 4
   odometer[0] = 0;
 
   // wall follow left out of room 3 to wall switch location
@@ -315,12 +309,12 @@ void room3to4() {
   while(autoLineDetect() == false) {
     wallFollow(LEFT);
     if(getDist(FRONTIR) < 500) {
-      dog_location = TWO_THREE;
+      dog_location = TWO;
       break;
     }
   }
 
-  if(dog_location == TWO_THREE) {
+  if(dog_location == TWO) {
     rotate(180);
 
     while(autoLineDetect() == false) {
@@ -331,7 +325,7 @@ void room3to4() {
   lineUpEnter();
   curRoomNum = 4;
 }
-// TODO NOAH: needs testing
+// TODO NOAH: needs testing with dog
 void room4to1() {
   int distToWallSwitch = 150;
   int distToWallSwitch2 = 140;
@@ -390,8 +384,6 @@ void room4to1() {
     }
   }
 
-
-
   lineUpEnter();
   curRoomNum = 1;
 }
@@ -448,8 +440,10 @@ void room4to2() {
   int odometerDogApproached = 0;
   frontSonar.enable();
   rfSonar.enable();
+
   determineRoom4OrientationFromRoom4();
   roomTapeExit();
+
   if(room4_orientation == OPENUP) {
     
     moveForwardUntilWall(15);
@@ -524,15 +518,15 @@ void room4to2() {
 }
 
 //Todo NOAH: Needs testing
-
-// On loopback, might want to use odometry and rotation over seeing dog again at location 1
 void room4to3() {
 	determineRoom4OrientationFromRoom4();
 	roomTapeExit();
   odometer[0] = 0;
-  int distToWallSwitch1 = 60;     // distance from room4 up entrance to wall switch between 4 and 3
+  int distToWallSwitch1 = 60;     // distance from room4 up entrance, left, to wall switch between 4 and 3
   int distToWallSwitch2 = 110;    // distance from dog location 1 to wall switch location outside room 4, east hallway
-  int distToWallSwitch3 = 110;
+  int distToWallSwitch3 = 270;    // distance from dog location 1 to wall switch location between 4 and 3
+  int distToWallSwitch4 = 90;     // distance from room4 down entrance to wall switch between 4 and 3
+  int distToWallSwitch5 = 250;    // distance from room4 up entrance, right, to wall switch between 4 and 3
 
   // if room 4 open up
   if(room4_orientation == OPENUP) {
@@ -540,7 +534,7 @@ void room4to3() {
     // if dog not known to be at location 1
     if(dog_location == UNKNOWN || dog_location == TWO || dog_location == THREE || dog_location == TWO_THREE) {
 
-      // wall follow left to wall switch 1 location
+      // wall follow left to wall switch 1 location between rooms 4 and 3
       while(odometer[0] < distToWallSwitch1) {
         wallFollow(LEFT);
 
@@ -556,13 +550,13 @@ void room4to3() {
         rotate(180);
         odometer[0] = 0;
 
-        // wall follow left until wall switch 2 location
+        // wall follow left until wall switch 2 location outside room 4, east hallway
         while(odometer[0] < distToWallSwitch2) {
           wallFollow(LEFT);
         }
 
-        // wall follow right until we see the dog, then turn around
-        while(getDist(FRONTIR) > 500) {
+        // wall follow right until we're between rooms 3 and 4, then turn around
+        while(odometer[0] < distToWallSwitch3) {
           wallFollow(RIGHT);
         }
         rotate(180);
@@ -584,28 +578,29 @@ void room4to3() {
           wallFollow(RIGHT);
         }
       }
-    // if we know dog location to be 1 at the outset, then loop around room 4 to other side of dog
+    // if we know dog location to be 1 at the outset, then loop around room 4 to wall switch between 4 and 3
     } else if(dog_location == ONE) {
-      
-      // wall follow right out of room 4 until we see the dog at location 1, then turn around
-      while(getDist(FRONTIR) > 500) {
-          wallFollow(RIGHT);
-        }
-        rotate(180);
+      odometer[0] = 0;
 
-        // wall follow right into room 3
-        while(autoLineDetect() == false) {
+      // wall follow right out of room 4 until we're between rooms 4 and 3, then turn around
+      while(odometer[0] < distToWallSwitch5) {
           wallFollow(RIGHT);
-        }
+      }
+      rotate(180);
+
+      // wall follow right into room 3
+      while(autoLineDetect() == false) {
+        wallFollow(RIGHT);
+      }
 
     }
 
-  // if room 4 orientation is OPENDOWN, wall follow right until we've traveled distToWallSwitch3
+  // if room 4 orientation is OPENDOWN, wall follow right until we've traveled distToWallSwitch4
   } else if(room4_orientation == OPENDOWN) {
     odometer[0] = 0;
 
-    // wall follow right until we've traveled distToWallSwitch3, then turn around
-    while(odometer[0] < distToWallSwitch3) {
+    // wall follow right until we've traveled distToWallSwitch4, then turn around
+    while(odometer[0] < distToWallSwitch4) {
       wallFollow(RIGHT);
     }
     rotate(180);
@@ -715,7 +710,7 @@ void goToNextRoom() {
 
         if(room4to1ArrivalEntrance == NORTH) {
           pass_through = true;
-          pass_through_direction = RIGHT;
+          pass_through_direction = LEFT;
         }
         break;
       case 1:

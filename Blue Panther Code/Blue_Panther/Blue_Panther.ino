@@ -70,7 +70,7 @@
 
 #include <Button.h>
 #include <DualVNH5019MotorShield.h>
-#include <FreqCounter.h>
+//#include <FreqCounter.h>
 #include <Flame.h>
 #include <FlameSensor.h>
 #include <LineSensor.h>
@@ -276,10 +276,10 @@ long dlymilTest = 6000;
 void loop(){
   
   //NOAH - room test
-  //lineUp();
   //Serial.println(getDist(FRONTIR));
-  //room4to1();
-  //delay(10000);
+    lineUp();
+    room3to4();
+    delay(15000);
 
 
   // NOAH - working dog detection and stop while wall following

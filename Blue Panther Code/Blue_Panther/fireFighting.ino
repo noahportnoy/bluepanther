@@ -37,7 +37,7 @@ void buttonStart() {
 void flameHunt(){
   while (flame.isLit() == true) {
     goToNextRoom();
-    servoPowerOn();
+    //servoPowerOn();
     if (flameDetect() == true) {  //Flame is detected in the room, begin to approach it and stop when close enough.
       ledOn();
       robotFlamePoint();
@@ -50,10 +50,10 @@ void flameHunt(){
       verifyExtinguish();  //Verifies that the flame has been extinguished, otherwise will attempt to extinguish it again by flooding it with CO2.
 //      arbitraryStart();
       ledOff();
-      servoPowerOff();
+      //servoPowerOff();
     }
     else {
-      servoPowerOff();
+      //servoPowerOff();
       //If pass_through is false, the robot does not  passed through the room, so it is still at the tape facing into the room. It is not facing outwards at another exit.
       if (pass_through == false) {
         

@@ -27,7 +27,7 @@
   //Add an offset to better suit the servo's desired scanning range
   //Center potition is straight ahead for horizontal, and level for vertical.
   //Horizontal zero degrees is understood to be 90 degrees left of center. Vertical zero is defined to be 90 degrees less than level.
-  int servoOffset[2] = {32, -70};  //Clockwise, or upwards rotation of servo from zero degrees. Lower moves the servo towards zero.
+  int servoOffset[2] = {32, -57};  //Clockwise, or upwards rotation of servo from zero degrees. Lower moves the servo towards zero.
   int sensorFlamePointOffset[2] = {-8, -12};  //How much to adjust/correct the robot arm to point the hose directly at flame, after obtaining max readings from flame scans
   
   //Key positions
@@ -308,7 +308,7 @@ void verifyExtinguish(){
     //Scan for flame
     flameScanFull(X);
     //If flame is still lit
-    if (500 < maxHeatSig[X]) {    //Prev. minFlameVal
+    if (minFlameVal < maxHeatSig[X]) {    //Prev. minFlameVal
       //Go forward a little, get closer to the flame.
       robotFlamePoint();
       moveDist(5);

@@ -301,7 +301,7 @@ int primitive1() {
   //Ideally takes input from a proximity sensor mounted at 45deg from the normal and directed at the wall being followed
   //Corrects for error by reducing the velocity of one wheel, or the other, proportional to the error
   //Adjusted outerTurn behaviour with sonarBufferDist
-  updateSonars();
+  //updateSonars();
 
   int idealWallDistLeft = 450;    //This is the distance the robot will try to keep from the wall. 450, 360, 380 for leftIR.
   int idealWallDistRight = 440;    //This is the distance the robot will try to keep from the wall.  for rightIR. Prev: 450, 360, 440
@@ -341,6 +341,8 @@ int primitive1() {
     sensorDist = (float)getDist(RIGHTIR);
     distError = (float)(idealWallDistRight) - sensorDist;
   }
+
+  updateSonars();
 
   if (distError < -tolerance) {  //Too far from wall
     if (wall_follow_direction == LEFT) {
