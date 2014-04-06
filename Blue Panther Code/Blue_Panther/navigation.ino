@@ -62,10 +62,10 @@ void room1Eto2() {
   curRoomNum = 2;
 }
 
-// Todo Noah - Needs testing for moveForwardUntilWall
+// Noah - looks good!
 void room1Eto3() {
 //Room 1 east-exit to room 3
-  
+
   roomTapeExit();
   int distToWallSwitch = 40;
 
@@ -92,18 +92,17 @@ void room1Eto3() {
   curRoomNum = 3;
 }
 
-// Noah - could use a little more testing, particularly for room1_wall_location == NORTH
+// Noah - Needs testing
 void room1Nto3() {
 //Room 1 north-exit to room 3
-  //locateDogFromRoom1N();
+  locateRoom1VarDoorFromRoom1N();  // Determine the location of room 1's var door from room 1N
   rotate(180);
   roomTapeExit();
 
   while(autoLineDetect() == false) {
     wallFollow(RIGHT);
   }
-  roomTapeExit();
-  curRoomNum = 1;
+  delay(2000);
   room1Eto3();
 }
 
@@ -122,7 +121,6 @@ void room1Eto4() {
 
   lineUpEnter();
 
-  curRoomNum = 1;
   // call room 1 north to room 4 method
   room1Nto4();
 }
@@ -232,11 +230,13 @@ void room2to3() {
   curRoomNum = 3;
 }
 
-// Todo Chi: Needs testing. Tested, just need to integrate portion that relies on room3to4 implementation
+// Todo Chi: Test for room3to4 method integration
 void room2to4() {
 //Room 2 to room 4
+  int distToWallSwitch = 80;   // wall switch location between 3 and 4
+
   //Strategy: Left wall-follow almost to entrance of room 3; rotate 180 in the hallway then follow the room 3 to 4 navigation strategy.
-  roomTapeExit();
+
   odometer[0] = 0.0;
   float distToTravel = 140;
   //Left wall-follow almost to entrance of room 3
@@ -245,7 +245,35 @@ void room2to4() {
   }
   //Rotate 180 in the hallway then follow the room 3 to 4 navigation strategy.
   rotate(180);
-  //....room 3 to 4 strategy.......// MARK //
+  
+  ////////////// begin room3to4 strategy ///////////////
+  odometer[0] = 0;
+
+  // wall follow left to wall switch location
+  while(odometer[0] < distToWallSwitch) {
+    wallFollow(LEFT);
+  }
+
+  rotate(180);
+
+  while(autoLineDetect() == false) {
+    wallFollow(LEFT);
+    if(getDist(FRONTIR) < 500) {
+      dog_location = TWO;
+      break;
+    }
+  }
+
+  if(dog_location == TWO) {
+    rotate(180);
+
+    while(autoLineDetect() == false) {
+      wallFollow(RIGHT);
+    }
+  }
+
+  ////////////// end room3to4 strategy ///////////////
+
   lineUpEnter();
   curRoomNum = 4;
 }
@@ -292,7 +320,7 @@ void room3to2() {
   curRoomNum = 2;
 }
 
-// Noah - I deem this acceptable!
+// Noah - looks good!
 void room3to4() {
   roomTapeExit();
   
@@ -325,11 +353,12 @@ void room3to4() {
   lineUpEnter();
   curRoomNum = 4;
 }
-// TODO NOAH: needs testing with dog
+// Noah - looks good!
 void room4to1() {
   int distToWallSwitch = 150;
   int distToWallSwitch2 = 140;
   int distToWallSwitch3 = 50;
+  int distToDogAt2 = 0;
   determineRoom4OrientationFromRoom4();
   roomTapeExit();
 
@@ -357,7 +386,7 @@ void room4to1() {
     }
 
     if(dog_location == TWO) {
-      rotate(180);
+      rotate(-150);
       odometer[0] = 0;
 
       while(odometer[0] < distToWallSwitch) {
@@ -376,8 +405,34 @@ void room4to1() {
       room4to1ArrivalEntrance = NORTH;
 
     } else {
+      odometer[0] = 0;
       while(autoLineDetect() == false) {
         wallFollow(LEFT);
+        if(getDist(FRONTIR) < 500) {
+          // dog seen at location 2
+          dog_location = TWO;
+          Serial.println("Dog seen at TWO");
+          distToDogAt2 = odometer[0];
+          break;
+        }
+      }
+
+      if(dog_location == TWO) {
+        rotate(180);
+        odometer[0] = 0;
+
+        while(odometer[0] < distToWallSwitch + distToDogAt2) {
+          wallFollow(RIGHT);
+        }
+
+        odometer[0] = 0;
+        while(odometer[0] < distToWallSwitch2) {
+          wallFollow(LEFT);
+        }
+
+        while(autoLineDetect() == false) {
+          wallFollow(RIGHT);
+        }
       }
 
       room4to1ArrivalEntrance = NORTH;
