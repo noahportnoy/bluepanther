@@ -133,9 +133,7 @@ void room1Eto4() {
     wallFollow(LEFT);
   }
 
-  lineUpEnter();
-
-  // call room 1 north to room 4 method
+  lineUp();
   room1Nto4();
 }
 
@@ -741,9 +739,17 @@ void goToNextRoom() {
       case 4:
         room4to1();
         break;
-      // case 1:
-      //   room1to2();  // fix
-      //   break;
+      case 1:
+        // determine whether we're at 1 north or east entrance
+        delay(50);
+        rfSonar.enable();
+        sonarDist[REARSONAR] = rfSonar.read();
+
+        if(sonarDist[REARSONAR] < 90) {
+          room1Nto2();  // we're at north entrance
+        } else {
+          room1Eto2();  // we're at east entrance
+        }
     }
   }
   else if (startRoomNum == 3) {
