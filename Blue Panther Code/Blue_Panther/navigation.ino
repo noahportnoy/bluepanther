@@ -863,16 +863,20 @@ void arbitraryStart() {
   
   //Check the front sonar
   if (sonarDist[FRONTSONAR] < frontSonarBuffer) {  //If there's a wall ahead
+    moveDist(-10);
     if (leftIRDist < rightIRDist) {  //If the left side of the robot is closer to the wall, follow the left wall
+      rotate(90);
       wallDir = LEFT;
     }
     else {
+      rotate(-90);
       wallDir = RIGHT;
     }
   }
   
   //Check the distanceIRs
   else if ((leftIRDist < leftIRBuffer) && (rightIRDist < rightIRBuffer)) {  //If both front corners of the robot are close to a wall, rotate left some then follow the right wall
+    moveDist(-10);
     rotate(-90);
     wallDir = RIGHT;
   }
