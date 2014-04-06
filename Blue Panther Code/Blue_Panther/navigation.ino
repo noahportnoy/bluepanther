@@ -390,7 +390,6 @@ void room4to1() {
       if(getDist(FRONTIR) < 500) {
         // dog seen at location 2
         dog_location = TWO;
-        Serial.println("Dog seen at TWO");
         break;
       }
     }
@@ -421,7 +420,6 @@ void room4to1() {
         if(getDist(FRONTIR) < 500) {
           // dog seen at location 2
           dog_location = TWO;
-          Serial.println("Dog seen at TWO");
           distToDogAt2 = odometer[0];
           break;
         }
@@ -592,7 +590,6 @@ void room4to3() {
   int distToWallSwitch3 = 320;    // distance from dog location 1 to wall switch location between 4 and 3
   int distToWallSwitch4 = 90;     // distance from room4 down entrance to wall switch between 4 and 3
   int distToWallSwitch5 = 290;    // distance from room4 up entrance, right, to wall switch between 4 and 3
-  dog_location = ONE;
 
   // if room 4 open up
   if(room4_orientation == OPENUP) {
@@ -827,13 +824,9 @@ void locateRoom1VarDoorFromRoom1N() {   // was north for < 180, else south
   int leftBackDist = lbSonar.read();
   if (room1_wall_location == UNKNOWN) {
     if (leftBackDist < 110) {
-      Serial.print("wall is at NORTH. leftBackDist is ");
-      Serial.println(leftBackDist);
       room1_wall_location = NORTH;
     }
     else {
-      Serial.print("wall is at SOUTH. leftBackDist is ");
-      Serial.println(leftBackDist);
       room1_wall_location = SOUTH;
     }
   }
@@ -1097,8 +1090,7 @@ void returnHome() {
   else if(curRoomNum == 4) {
     switch(startRoomNum) {
       case 1:
-        room4to1();           // <-- This wasn't here before, is it okay?
-        //room4to1E();
+        room4to1();
         break;
       case 2:
         room4to2();
