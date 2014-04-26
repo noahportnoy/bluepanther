@@ -506,7 +506,8 @@ void flameApproach2() {
   int prevServoXDir = curServoXDir;
   
 //  while ((minFlameVal < maxHeatSig[X]) && ((pmaxHeatSig[X] - 60) < maxHeatSig[X])) {  //Prev: 150, 60. While a flame can be seen and its heat-sig is becoming stronger with time
-  while ((minFlameVal < maxHeatSig[X]) && ((pmaxHeatSig[X] - 150) < maxHeatSig[X])) {  //Prev: 150, 60. While a flame can be seen and its heat-sig is becoming stronger with time
+//  while ((minFlameVal < maxHeatSig[X]) && ((pmaxHeatSig[X] - 150) < maxHeatSig[X])) {  //Prev: 150, 60. While a flame can be seen and its heat-sig is becoming stronger with time
+  while ((minFlameVal < maxHeatSig[X]) && ((pmaxHeatSig[X] - 60) < maxHeatSig[X])) {  //Prev: 150, 60. While a flame can be seen and its heat-sig is becoming stronger with time
 
 //  flameStopVal = 9999;  //Temp. Disable stopping when close to flame.
 //  while (minFlameVal < maxHeatSig[X]) {  //While a flame can be seen
@@ -522,11 +523,11 @@ void flameApproach2() {
       tempMaxHeatSig = 0;
       tempMaxHeatSigPW = getServoPos(X);
       prevServoXDir = curServoXDir;
-///*
+/*
       Serial.print(maxHeatSigPW[X]);
       Serial.print("   ");
       Serial.println(maxHeatSig[X]);
-//*/
+*/
     }
 
     int tempMaxFlameSensorIndex = readFlameSensor(X);
@@ -543,13 +544,13 @@ void flameApproach2() {
     }
     //Turn toward the flame
     if (maxHeatSigPW[X] < (centerPos[X] - tolerance)) {  //If the flame is more than x degrees left of center, arc-turn left
-      setVelocities(20, 30);  //Prev: (10, 15), (20, 30), (40, 60)
+      setVelocities(10, 15);  //Prev: (10, 15), (20, 30), (40, 60)
     }
     else if ((centerPos[X] + tolerance) < maxHeatSigPW[X]) {  //If the flame is more than x degrees right of center, arc-turn right
-      setVelocities(30, 20);
+      setVelocities(15, 10);
     }
     else {    //If the flame is ahead, roughly
-      setVelocities(30);
+      setVelocities(15);
     }
     controlBase();
   }
