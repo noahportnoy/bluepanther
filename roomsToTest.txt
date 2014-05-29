@@ -1,0 +1,4 @@
+test room1Eto4() to make sure it can go through to room1Nto4()
+**  room1Nto4() - When dog is at location 1 against north wall, robot can't see the dog
+room3to1E() - Need to correct against right wall after distToWallSwitch, then test
+room4to2() - Needs testing. Tested, works ~75% of time.

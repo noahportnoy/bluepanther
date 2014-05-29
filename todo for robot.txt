@@ -1,0 +1,23 @@
+-improvements to wallFollow(RIGHT)
+-optimize verifyExtinguish()
+-in verifyextinguish, scan after robotFlamePoint
+-consider other nav plans
+
+keep in mind:
+-remove test settings in room methods (e.g. dog locations, room orientations, door locations!)
+
+check before competing:
+-charged batteries
+-big battery plugged in for motors
+-servos plugged in
+-co2 refilled
+-co2 canister lined up well
+-co2 hose lined up well
+-tighten wheels
+-no loose connections
+-right code uploaded
+
+
+bring to trinity:
+-solder, extension cords, power strips
+-spare servo from other team
