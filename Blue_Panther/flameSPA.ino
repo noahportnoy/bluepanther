@@ -27,11 +27,11 @@
   //Add an offset to better suit the servo's desired scanning range
   //Center potition is straight ahead for horizontal, and level for vertical.
   //Horizontal zero degrees is understood to be 90 degrees left of center. Vertical zero is defined to be 90 degrees less than level.
-  int servoOffset[2] = {26, -62};  //Clockwise, or upwards rotation of servo from zero degrees. Lower moves the servo towards zero.
+  int servoOffset[2] = {0, 5};  //Clockwise, or upwards rotation of servo from zero degrees. Lower moves the servo towards zero.
   int sensorFlamePointOffset[2] = {-8, -12};  //How much to adjust/correct the robot arm to point the hose directly at flame, after obtaining max readings from flame scans
   
   //Key positions
-  int centerPos[2] = {90, 84};
+  int centerPos[2] = {90, 90};
     //Horizontal servo- 90 degrees means pointing straight
   int leftPos = 50;  //***Left-most position. 90 degrees is straight, less than 90 is left, and greater than 90 is right
   int rightPos = 200;

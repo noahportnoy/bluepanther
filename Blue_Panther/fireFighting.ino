@@ -16,8 +16,8 @@ void fireFightDemo() {
 
 void fireFight(){
   ledOn();
-//  sensorStart();  //Start on button push or fire-alarm
-  buttonStart();
+  sensorStart();  //Start on button push or fire-alarm
+//  buttonStart();
   ledOff();
   arbitraryStart();   //Gets to doorway of starting room (facing outward) and stops
   roomDetermine();  //Determine the starting room using sonar(s)
@@ -27,11 +27,6 @@ void fireFight(){
   roomTapeExit();
   returnHome();  //Drives the robot back to the starting room without entering any other rooms
   finalStop();  //Stops the robot safely inside the room where it started.
-}
-
-void buttonStart() {
-  while (startButton.isPushed() == false) {
-  }
 }
 
 void flameHunt(){
@@ -106,8 +101,38 @@ void continuousFlameHunt(){
   }
 }
 
-void sensorStart(){
-  
+void buttonStart() {
+  while (startButton.isPushed() == false) {
+  }
+}
+
+void sensorStart() {
+  Serial1.begin(9600);
+
+  bool alarmDetected = false;
+
+  while (1) {
+    // Read the mic frequency
+    if (Serial1.available()) {
+      Serial.print("slave said: ");
+      int slaveData = (Serial1.read() & 0xFF);
+      Serial.println(slaveData);
+      if (slaveData == 0x1) {
+        Serial.println("alarm detected");
+        alarmDetected = true;
+      }
+    }
+    
+    // Break out on button push, or on hearing approx frequency of fire alarm
+    if (startButton.isPushed() || alarmDetected == true) {
+      Serial.println("gonna break out");
+      break;
+    }
+    
+  }
+  Serial.println("just broke out");
+  Serial1.end();
+  Serial.println("exiting sound start");
 }
 
 void wallFollow(int wallDir){

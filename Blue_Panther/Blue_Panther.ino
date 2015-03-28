@@ -204,7 +204,7 @@ Servo servoY;  //y-axis servo
 int servoXPin = 45;
 int servoYPin = 44;
 
-int servoPowerPin[2] = {49, 34};  //Servo noise blacks out the sonar readings. Power the servos when needed using opto-isolators connected to these pins for x and y.
+int servoPowerPin[2] = {46, 34};  //Servo noise blacks out the sonar readings. Power the servos when needed using opto-isolators connected to these pins for x and y.
 int servoPower[2] = {0, 0};  //This variable keeps track of which servos are turned on. Intended to only have one servo on at a time.
 
 #define X 0
@@ -261,12 +261,16 @@ void setup(){
   initializeOdometers();
   flame.on();   //The candle is alight
   ledBlink();
-//  sensorStart();
   //For test-coding
+//  ledOn();
+//  sensorStart();
+//  Serial.println("about to turn led off");
+//  ledOff();
+//  Serial.println("led should be off");
 //  buttonStart();
-  ledOn();
-  buttonStart();
-  ledOff();
+//  ledOn();
+//  buttonStart();
+//  ledOff();
 }
 
 long cmilTest = 0;
@@ -275,26 +279,9 @@ long dlymilTest = 6000;
 
 void loop(){
   
-  //NOAH - room test
-  //Serial.println(getDist(FRONTIR));
-  //lineUp();
-  //room1Nto2();
-  //delay(15000);
-
-  fireFight();
-
-
-  // NOAH - working dog detection and stop while wall following
-  // wallFollow(RIGHT);
-  // int sensorValue = getDist(FRONTIR);
-  // Serial.println(sensorValue);
-  // delay(50);
-  // if(sensorValue < 400) {
-  //   stopMotors();
-  //   delay(10000);
-  // }
-
-
+  centerServo(Y);
+  
+  //fireFight();
 
   // Chi old code
 //  wallFollow(RIGHT);
@@ -408,7 +395,7 @@ void setupServos(){
   //Assigns servo objects to their I/O pins, and moves both servos to their starting positions
   servoPowerOn();
   servoX.attach(servoXPin);
-  servoY.attach(servoYPin, 544, 2600);  //Push the vertical servo's range
+  servoY.attach(servoYPin, 450, 2400);  //Push the vertical servo's range
   servoY.write(170);  //Stop the servo from swinging down before centering itself
   centerServo(X);
   centerServo(Y);
