@@ -262,11 +262,9 @@ void setup(){
   flame.on();   //The candle is alight
   ledBlink();
   //For test-coding
-//  ledOn();
-//  sensorStart();
-//  Serial.println("about to turn led off");
-//  ledOff();
-//  Serial.println("led should be off");
+  ledOn();
+  sensorStart();
+  ledOff();
 //  buttonStart();
 //  ledOn();
 //  buttonStart();
@@ -279,7 +277,29 @@ long dlymilTest = 6000;
 
 void loop(){
   
-  centerServo(Y);
+  fireFight();
+
+//  wallFollow(RIGHT);
+  
+//  flameSensorTest();
+  
+//  enableSonars();
+//  testSonars();
+//  setTopSpeed(200);
+//  forwardSlow();
+//  motorTest();
+
+//  flameScanFull(X);
+//  sensorFlamePoint(X);
+//  flameScanFull(Y);
+//  sensorFlamePoint(Y);
+//  delay(2000);
+//  flameExtinguishSP();
+//  delay(2000);
+//  setupServos();
+//  ledOn();
+//  buttonStart();
+//  ledOff();
   
   //fireFight();
 

@@ -223,8 +223,10 @@ void room2to1E() {
   }
   lineUpEnter();
   if (room1_wall_location == NORTH) {
-    rotate(-55);
-    specialExitRoom1 = true;
+    rotate(-30);  // Added 2015
+    moveDist(20);  // Added 2015
+//    rotate(-55);
+//    specialExitRoom1 = true;
   }
   curRoomNum = 1;
 }

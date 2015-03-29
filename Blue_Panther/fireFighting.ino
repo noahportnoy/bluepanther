@@ -114,25 +114,19 @@ void sensorStart() {
   while (1) {
     // Read the mic frequency
     if (Serial1.available()) {
-      Serial.print("slave said: ");
       int slaveData = (Serial1.read() & 0xFF);
-      Serial.println(slaveData);
       if (slaveData == 0x1) {
-        Serial.println("alarm detected");
         alarmDetected = true;
       }
     }
     
     // Break out on button push, or on hearing approx frequency of fire alarm
     if (startButton.isPushed() || alarmDetected == true) {
-      Serial.println("gonna break out");
       break;
     }
     
   }
-  Serial.println("just broke out");
   Serial1.end();
-  Serial.println("exiting sound start");
 }
 
 void wallFollow(int wallDir){
