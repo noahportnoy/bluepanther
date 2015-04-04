@@ -331,6 +331,10 @@ void room3to2() {
 }
 
 // Noah - looks good!
+// Chi - BAD! Known issue: Fails to mark dog at location THREE
+//     - detects dog but always marks it at location TWO only, even if it's at location THREE.
+//     - this is a serious bug, it really screws up other room-to-room navigation methods that depend on this information being noted correctly.
+//     - hot-fixed the issue, must perform further review and testing
 void room3to4() {
   roomTapeExit();
   
@@ -343,16 +347,22 @@ void room3to4() {
   }
 
   rotate(180);
-
+  
+  odometer[0] = 0;
+  int distToDogLocation3 = 200;
   while(autoLineDetect() == false) {
     wallFollow(LEFT);
     if(getDist(FRONTIR) < 500) {
-      dog_location = TWO;
+      if (odometer[0] < distToDogLocation3) {
+        dog_location = THREE;
+      } else {
+        dog_location = TWO;
+      }
       break;
     }
   }
 
-  if(dog_location == TWO) {
+  if(dog_location == TWO || dog_location == THREE) {
     rotate(180);
 
     while(autoLineDetect() == false) {
@@ -363,7 +373,17 @@ void room3to4() {
   lineUpEnter();
   curRoomNum = 4;
 }
+
 // Noah - looks good!
+/* Chi - BAD! Known issue: Fails on start 2 -> 3 -> 4 -> 1N, room 4 open_up, dog between rooms 1 and 4, drives through dog.
+ *     - It doesn't always work, simple testing would have shown that.
+ *     - Implementation logic appears flawed, overall strategy unclear, purpose of some variables is also unclear, code is an unnecessary challenge to trace through.
+ *     - Why rely on measured odometer readings (e.g. distToDog)? Assumes ideality. Inherently not tolerant of wheel slippage. Terrible approach.
+ *     - Not commented at all, seriously? No wonder this code is so problematic!
+ *     - I do not think this is anywhere near "look good" either in implementation or testing
+ *     - Unfortunately it caused failure during 2nd trial at 2015 competition (robot lost traction mouting carpet, but pulled through, then this nav code went awry).
+ *     - There's no simple-fixing this. It needs to be entirely rewritten.
+ */
 void room4to1() {
   int distToWallSwitch = 150;
   int distToWallSwitch2 = 140;
@@ -384,66 +404,76 @@ void room4to1() {
 
   } else if(room4_orientation == OPENUP) {
     odometer[0] = 0;
-
-    while(odometer[0] < distToWallSwitch3) {
-      wallFollow(RIGHT);
-      if(getDist(FRONTIR) < 500) {
-        // dog seen at location 2
-        dog_location = TWO;
-        break;
-      }
-    }
-
-    if(dog_location == TWO) {
-      rotate(-150);
-      odometer[0] = 0;
-
-      while(odometer[0] < distToWallSwitch) {
+    // Chi: partial hot-fix for the issue
+    if (dog_location == THREE) {
+      while(odometer[0] < distToWallSwitch3) {
         wallFollow(RIGHT);
       }
-
-      odometer[0] = 0;
-      while(odometer[0] < distToWallSwitch2) {
+      while(autoLineDetect() == false) {
         wallFollow(LEFT);
       }
-
-      while(autoLineDetect() == false) {
-        wallFollow(RIGHT);
-      }
-
       room4to1ArrivalEntrance = NORTH;
-
     } else {
-      odometer[0] = 0;
-      while(autoLineDetect() == false) {
-        wallFollow(LEFT);
+      while(odometer[0] < distToWallSwitch3) {
+        wallFollow(RIGHT);
         if(getDist(FRONTIR) < 500) {
           // dog seen at location 2
           dog_location = TWO;
-          distToDogAt2 = odometer[0];
           break;
         }
       }
-
+  
       if(dog_location == TWO) {
-        rotate(180);
+        rotate(-150);
         odometer[0] = 0;
-
-        while(odometer[0] < distToWallSwitch + distToDogAt2) {
+  
+        while(odometer[0] < distToWallSwitch) {
           wallFollow(RIGHT);
         }
-
+  
         odometer[0] = 0;
         while(odometer[0] < distToWallSwitch2) {
           wallFollow(LEFT);
         }
-
+  
         while(autoLineDetect() == false) {
           wallFollow(RIGHT);
         }
+  
+        room4to1ArrivalEntrance = NORTH;
+  
+      } else {
+        odometer[0] = 0;
+        while(autoLineDetect() == false) {
+          wallFollow(LEFT);
+          if(getDist(FRONTIR) < 500) {
+            // dog seen at location 2
+            dog_location = TWO;
+            distToDogAt2 = odometer[0];
+            break;
+          }
+        }
+  
+        if(dog_location == TWO) {
+          rotate(180);
+          odometer[0] = 0;
+  
+          while(odometer[0] < distToWallSwitch + distToDogAt2) {
+            wallFollow(RIGHT);
+          }
+  
+          odometer[0] = 0;
+          while(odometer[0] < distToWallSwitch2) {
+            wallFollow(LEFT);
+          }
+  
+          while(autoLineDetect() == false) {
+            wallFollow(RIGHT);
+          }
+        }
+  
+        room4to1ArrivalEntrance = NORTH;
       }
-
-      room4to1ArrivalEntrance = NORTH;
     }
   }
 

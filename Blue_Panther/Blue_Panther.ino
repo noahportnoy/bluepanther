@@ -262,9 +262,9 @@ void setup(){
   flame.on();   //The candle is alight
   ledBlink();
   //For test-coding
-  ledOn();
-  sensorStart();
-  ledOff();
+//  ledOn();
+//  sensorStart();
+//  ledOff();
 //  buttonStart();
 //  ledOn();
 //  buttonStart();
@@ -279,6 +279,7 @@ void loop(){
   
   fireFight();
 
+//  distTest(RIGHTIR);
 //  wallFollow(RIGHT);
   
 //  flameSensorTest();
